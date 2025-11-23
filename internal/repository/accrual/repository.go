@@ -63,10 +63,10 @@ func (r *Repository) AccrualsListInfoByOrderIds(ctx context.Context, orderIds []
 	return res, nil
 }
 
-func (r *Repository) sendWithBackoff(ctx context.Context, orderId string) (res *srv.AccrualPayload, err error) {
+func (r *Repository) sendWithBackoff(ctx context.Context, orderID string) (res *srv.AccrualPayload, err error) {
 	fn := func(ctxBackoff context.Context) error {
 		var errBackoff error
-		res, errBackoff = r.send(ctxBackoff, orderId)
+		res, errBackoff = r.send(ctxBackoff, orderID)
 		return errBackoff
 	}
 
@@ -75,11 +75,11 @@ func (r *Repository) sendWithBackoff(ctx context.Context, orderId string) (res *
 	return res, err
 }
 
-func (r *Repository) send(ctx context.Context, orderId string) (res *srv.AccrualPayload, err error) {
+func (r *Repository) send(ctx context.Context, orderID string) (res *srv.AccrualPayload, err error) {
 	u := url.URL{
 		Scheme: "http",
 		Host:   r.address,
-		Path:   "/api/orders/" + url.PathEscape(orderId),
+		Path:   "/api/orders/" + url.PathEscape(orderID),
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *Repository) send(ctx context.Context, orderId string) (res *srv.Accrual
 			errResp = fmt.Errorf("accural response not ok, %w", err)
 		}
 	case http.StatusNoContent:
-		errResp = fmt.Errorf("%w{order-id=%v}", errAccuralNoContent, orderId)
+		errResp = fmt.Errorf("%w{order-id=%v}", errAccuralNoContent, orderID)
 	case http.StatusTooManyRequests:
 		errResp = fmt.Errorf("%w{retry-after=%vs}", errAccuralTooManyRequests, response.Header.Get("Retry-After"))
 	case http.StatusInternalServerError:
@@ -108,6 +108,8 @@ func (r *Repository) send(ctx context.Context, orderId string) (res *srv.Accrual
 	default:
 		errResp = fmt.Errorf("accural unhandled status, %v", response.StatusCode)
 	}
+
+	_ = response.Body.Close()
 
 	return res, errResp
 }
