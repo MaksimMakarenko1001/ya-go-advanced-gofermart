@@ -1,19 +1,7 @@
-package v0
-
-import "strings"
-
-type AccrualResponse struct {
-	Err     error
-	Payload *AccrualPayload
-}
-
-type AccrualPayload struct {
-	Order   string            `json:"order"`
-	Status  AccrualStatusType `json:"status"`
-	Accrual float64           `json:"accrual"`
-}
+package gofermart
 
 const (
+	AccrualStatusNew        AccrualStatusType = "NEW"
 	AccrualStatusRegistered AccrualStatusType = "REGISTERED"
 	AccrualStatusInvalid    AccrualStatusType = "INVALID"
 	AccrualStatusProcessing AccrualStatusType = "PROCESSING"
@@ -23,5 +11,5 @@ const (
 type AccrualStatusType string
 
 func (ast AccrualStatusType) String() string {
-	return strings.ToLower(string(ast))
+	return string(ast)
 }

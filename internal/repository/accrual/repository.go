@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
-	srv "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrderIds/v0"
+	srv "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
 )
 
@@ -31,18 +30,14 @@ func New(address string, reqTimeout time.Duration, throttlingRate uint, backoff 
 	}
 }
 
-func (r *Repository) AccrualsListInfoByOrderIds(ctx context.Context, orderIds []string) ([]srv.AccrualResponse, error) {
-	var wg sync.WaitGroup
-
-	respCh := make(chan srv.AccrualResponse, len(orderIds))
+func (r *Repository) AccrualsGetInfoByOrders(ctx context.Context, orderNumbers []string) ([]srv.AccrualResponse, error) {
+	respCh := make(chan srv.AccrualResponse, len(orderNumbers))
 	defer close(respCh)
 
-	for _, id := range orderIds {
-		wg.Add(1)
+	for _, id := range orderNumbers {
 
 		go func(orderId string) {
 			r.semaphore <- struct{}{}
-			defer wg.Done()
 			defer func() { <-r.semaphore }()
 
 			resp, err := r.sendWithBackoff(ctx, orderId)
@@ -53,9 +48,8 @@ func (r *Repository) AccrualsListInfoByOrderIds(ctx context.Context, orderIds []
 
 		}(id)
 	}
-	wg.Wait()
 
-	res := make([]srv.AccrualResponse, 0, len(orderIds))
+	res := make([]srv.AccrualResponse, 0, len(orderNumbers))
 	for item := range respCh {
 		res = append(res, item)
 	}
@@ -63,10 +57,10 @@ func (r *Repository) AccrualsListInfoByOrderIds(ctx context.Context, orderIds []
 	return res, nil
 }
 
-func (r *Repository) sendWithBackoff(ctx context.Context, orderID string) (res *srv.AccrualPayload, err error) {
+func (r *Repository) sendWithBackoff(ctx context.Context, orderNumber string) (res *srv.AccrualPayload, err error) {
 	fn := func(ctxBackoff context.Context) error {
 		var errBackoff error
-		res, errBackoff = r.send(ctxBackoff, orderID)
+		res, errBackoff = r.send(ctxBackoff, orderNumber)
 		return errBackoff
 	}
 
@@ -75,11 +69,11 @@ func (r *Repository) sendWithBackoff(ctx context.Context, orderID string) (res *
 	return res, err
 }
 
-func (r *Repository) send(ctx context.Context, orderID string) (res *srv.AccrualPayload, err error) {
+func (r *Repository) send(ctx context.Context, orderNumber string) (res *srv.AccrualPayload, err error) {
 	u := url.URL{
 		Scheme: "http",
 		Host:   r.address,
-		Path:   "/api/orders/" + url.PathEscape(orderID),
+		Path:   "/api/orders/" + url.PathEscape(orderNumber),
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -100,7 +94,7 @@ func (r *Repository) send(ctx context.Context, orderID string) (res *srv.Accrual
 			errResp = fmt.Errorf("accural response not ok, %w", err)
 		}
 	case http.StatusNoContent:
-		errResp = fmt.Errorf("%w{order-id=%v}", errAccuralNoContent, orderID)
+		errResp = fmt.Errorf("%w{order-id=%v}", errAccuralNoContent, orderNumber)
 	case http.StatusTooManyRequests:
 		errResp = fmt.Errorf("%w{retry-after=%vs}", errAccuralTooManyRequests, response.Header.Get("Retry-After"))
 	case http.StatusInternalServerError:
