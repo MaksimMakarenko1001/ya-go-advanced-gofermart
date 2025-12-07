@@ -46,3 +46,23 @@ type WithdrawalItem struct {
 	Withdrawal Withdrawal `json:"withdrawal"`
 	Order      Order      `json:"order"`
 }
+
+type OrderUpdate struct {
+	OrderNumber string    `json:"order_number"`
+	OrderStatus string    `json:"order_status"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type AccrualUpdate struct {
+	AccrualStatus string       `json:"accrual_status"`
+	AccrualAmount moneys.Money `json:"accrual_amount"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	OrderID       int64        `json:"order_id"`
+}
+
+type UserBalanceUpdate struct {
+	AccrualAmount    moneys.Money `json:"accrual_amount"`
+	WithdrawalAmount moneys.Money `json:"withdrawal_amount"`
+	UpdatedAt        time.Time    `json:"updated_at"`
+	UserID           int64        `json:"user_id"`
+}
