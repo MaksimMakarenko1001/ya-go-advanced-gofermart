@@ -11,6 +11,14 @@ type Money struct {
 	amount int64 // cents number
 }
 
+func New(amount int64) Money {
+	return Money{amount: 0}
+}
+
+func (m Money) Add(other Money) Money {
+	return Money{amount: m.amount + other.amount}
+}
+
 func (m Money) String() string {
 	return fmt.Sprintln(m.amount)
 }

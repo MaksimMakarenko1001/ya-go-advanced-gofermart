@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
 )
 
 type Repository struct {
@@ -16,14 +17,12 @@ func New(db *db.PGConnect) *Repository {
 	}
 }
 
-func (r *Repository) OrdersGetNext(ctx context.Context, limit int) (orderNumbers []string, err error) {
+func (r *Repository) OrdersListAccrualsByOrderStatus(ctx context.Context, orderStatus string, limit int) (items []entity.AccrualItem, err error) {
 	return nil, nil
 }
 
-func (r *Repository) OrdersComplete(ctx context.Context, orderNumbers []string) (err error) {
-	return nil
-}
-
-func (r *Repository) OrdersFail(ctx context.Context, orderNumbers []string) (err error) {
+func (r *Repository) OrdersUpdateAccruals(
+	ctx context.Context, orders []entity.OrderUpdate, accruals []entity.AccrualUpdate, userBalances []entity.UserBalanceUpdate,
+) (err error) {
 	return nil
 }
