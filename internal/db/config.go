@@ -4,20 +4,26 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
-	DSN        string `json:"-"`
-	Host       string `env:"host" envDefault:"localhost"`
-	Port       uint16 `env:"port" envDefault:"5432"`
-	User       string `env:"user" envDefault:"postgres"`
-	Password   string `env:"password" envDefault:"postgres"`
-	Name       string `env:"name" envDefault:"postgres"`
-	SSLMode    string `env:"ssl_mode" envDefault:"disable"`
-	MaxRetries uint16 `env:"max_retries" envDefault:"3"`
+	DSN        string        `json:"-"`
+	Host       string        `env:"host" envDefault:"localhost"`
+	Port       uint16        `env:"port" envDefault:"5432"`
+	User       string        `env:"user" envDefault:"postgres"`
+	Password   string        `env:"password" envDefault:"postgres"`
+	Name       string        `env:"name" envDefault:"postgres"`
+	SSLMode    string        `env:"ssl_mode" envDefault:"disable"`
+	MaxRetries uint16        `env:"max_retries" envDefault:"3"`
+	MinDelay   time.Duration `env:"min_delay" envDefault:"1s"`
+	DeltaDelay time.Duration `env:"delta_delay" envDefault:"2s"`
 }
 
 func (cfg Config) ToDSN() (string, error) {
+	if cfg.DSN != "" {
+		return cfg.DSN, nil
+	}
 	if err := cfg.validate(); err != nil {
 		return "", err
 	}

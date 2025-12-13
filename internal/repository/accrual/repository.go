@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	srv "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
@@ -19,13 +18,13 @@ type Repository struct {
 	client    *http.Client
 }
 
-func New(address string, reqTimeout time.Duration, throttlingRate uint, backoff *backoff.LinearBackoff) *Repository {
+func New(cfg Config, backoff *backoff.LinearBackoff) *Repository {
 	return &Repository{
-		semaphore: make(chan struct{}, throttlingRate),
-		address:   address,
+		semaphore: make(chan struct{}, cfg.ThrottlingRate),
+		address:   cfg.Address,
 		backoff:   backoff,
 		client: &http.Client{
-			Timeout: reqTimeout,
+			Timeout: cfg.Timeout,
 		},
 	}
 }

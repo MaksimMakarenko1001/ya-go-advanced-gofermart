@@ -22,7 +22,7 @@ func (srv *Service) Do(ctx context.Context, orderNumbers []string) (map[string]A
 		return nil, nil
 	}
 
-	ctxRepo, cancel := context.WithTimeout(ctx, srv.config.AccrualTimeout)
+	ctxRepo, cancel := context.WithTimeout(ctx, srv.config.Timeout)
 	defer cancel()
 
 	accrualResp, err := srv.accrualRepository.AccrualsGetInfoByOrders(ctxRepo, orderNumbers)

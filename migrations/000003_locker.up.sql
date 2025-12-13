@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS lock.locks (
     segment TEXT NOT NULL,
     until TIMESTAMPTZ NOT NULL,
     pid TEXT NOT NULL
-)
+);
 
 ALTER TABLE lock.locks
     ADD CONSTRAINT locks_pkey PRIMARY KEY (key, segment);

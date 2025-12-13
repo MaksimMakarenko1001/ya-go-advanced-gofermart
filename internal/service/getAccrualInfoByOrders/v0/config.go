@@ -3,5 +3,5 @@ package v0
 import "time"
 
 type Config struct {
-	AccrualTimeout time.Duration
+	Timeout time.Duration `env:"timeout" envDefault:"3s"`
 }
