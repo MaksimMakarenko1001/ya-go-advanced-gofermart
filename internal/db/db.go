@@ -19,7 +19,12 @@ type PGConnect struct {
 }
 
 func New(cfg Config, backoff *backoff.LinearBackoff) (conn *PGConnect, err error) {
-	db, err := sql.Open("pgx", cfg.DSN)
+	dsn, err := cfg.ToDSN()
+
+	if err != nil {
+		return nil, err
+	}
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
