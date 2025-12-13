@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
@@ -111,7 +110,7 @@ func (di *DI) Start() error {
 	defer cancel()
 
 	di.workers.accrueNew.Start(ctx)
-	time.Sleep(time.Second * 10)
+
 	err := http.ListenAndServe(di.config.HTTP.Address, nil)
 
 	di.infr.db.Close()
