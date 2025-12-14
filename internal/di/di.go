@@ -59,6 +59,7 @@ func (di *DI) initDB() {
 			backoff.NewBackoff(db.ClassifyPgError, di.config.DB.MaxRetries, di.config.DB.MinDelay),
 			di.config.DB.DeltaDelay,
 		),
+		// backoff.NewUglyBackoff(di.config.DB.MaxRetries, db.ClassifyPgError),
 	)
 	if err != nil {
 		log.Println("db init not ok,", err.Error())
@@ -67,8 +68,8 @@ func (di *DI) initDB() {
 
 func (di *DI) initRepositories() {
 	di.repositories.accrual = accrual.New(di.config.Repository.Accrual, backoff.NewLinearBackoff(
-		backoff.NewBackoff(accrual.ClassifyHTTPError, di.config.Repository.Accrual.MaxRetries, di.config.DB.MinDelay),
-		di.config.DB.DeltaDelay,
+		backoff.NewBackoff(accrual.ClassifyHTTPError, di.config.Repository.Accrual.MaxRetries, di.config.Repository.Accrual.MinDelay),
+		di.config.Repository.Accrual.DeltaDelay,
 	))
 	di.repositories.lock = lock.New(di.infr.db)
 	di.repositories.pg = pg.New(di.infr.db)

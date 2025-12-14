@@ -45,10 +45,13 @@ func (w *Worker) run(ctx context.Context) {
 		case onceCh <- struct{}{}:
 			jobCtx, cancel := context.WithTimeout(ctx, w.config.JobTimeout)
 			go func() {
+				ts := time.Now()
 				defer cancel()
+
 				if err := w.doJob(jobCtx); err != nil {
 					log.Println(err)
 				}
+				time.Sleep(w.config.JobInterval - time.Since(ts))
 				<-onceCh
 			}()
 		}
@@ -57,11 +60,6 @@ func (w *Worker) run(ctx context.Context) {
 
 func (w *Worker) doJob(ctx context.Context) (err error) {
 	ts := time.Now()
-
-	defer func() {
-		time.Sleep(w.config.JobInterval - time.Since(ts)) // don't do it quickly
-	}()
-
 	ok, err := w.locker.LockAcquire(ctx, w.key, w.segment, ts.Add(w.config.JobInterval), w.pid)
 	if err != nil {
 		return fmt.Errorf("failed to acquire lock: %w", err)

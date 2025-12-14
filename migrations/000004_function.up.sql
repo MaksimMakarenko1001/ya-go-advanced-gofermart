@@ -129,7 +129,7 @@ begin
                 order_status = src.order_status
             from order_cte as src
             where upd.order_number = src.order_number
-            returning upd.id
+            returning upd.order_number
         ),
         user_balance_ins as (
             insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
@@ -149,7 +149,7 @@ begin
         --     from user_balance_cte as src
         --     where upd.user_id = src.user_id
         -- )
-    select json_agg(cte.id) from order_upd as cte
+    select json_agg(cte.order_number) from order_upd as cte
         into _res
     ;
 

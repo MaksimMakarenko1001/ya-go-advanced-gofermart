@@ -1,6 +1,7 @@
 package gofermart
 
 const (
+	OrderStatusNone       OrderStatusType = "NONE"
 	OrderStatusNew        OrderStatusType = "NEW"
 	OrderStatusInvalid    OrderStatusType = "INVALID"
 	OrderStatusProcessing OrderStatusType = "PROCESSING"

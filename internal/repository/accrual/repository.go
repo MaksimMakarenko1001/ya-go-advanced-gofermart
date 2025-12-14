@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 
 	srv "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
 )
 
 type Repository struct {
@@ -30,28 +33,26 @@ func New(cfg Config, backoff *backoff.LinearBackoff) *Repository {
 }
 
 func (r *Repository) AccrualsGetInfoByOrders(ctx context.Context, orderNumbers []string) ([]srv.AccrualResponse, error) {
-	respCh := make(chan srv.AccrualResponse, len(orderNumbers))
-	defer close(respCh)
+	var wg sync.WaitGroup
+	res := make([]srv.AccrualResponse, 0, len(orderNumbers))
 
 	for _, id := range orderNumbers {
-
+		wg.Add(1)
 		go func(orderId string) {
 			r.semaphore <- struct{}{}
+
 			defer func() { <-r.semaphore }()
+			defer wg.Done()
 
 			resp, err := r.sendWithBackoff(ctx, orderId)
-			respCh <- srv.AccrualResponse{
+			res = append(res, srv.AccrualResponse{
 				Err:     err,
 				Payload: resp,
-			}
+			})
 
 		}(id)
 	}
-
-	res := make([]srv.AccrualResponse, 0, len(orderNumbers))
-	for item := range respCh {
-		res = append(res, item)
-	}
+	wg.Wait()
 
 	return res, nil
 }
@@ -93,13 +94,17 @@ func (r *Repository) send(ctx context.Context, orderNumber string) (res *srv.Acc
 			errResp = fmt.Errorf("accural response not ok, %w", err)
 		}
 	case http.StatusNoContent:
-		errResp = fmt.Errorf("%w{order-id=%v}", errAccuralNoContent, orderNumber)
+		res = &srv.AccrualPayload{
+			OrderNumber:   orderNumber,
+			AccrualStatus: gofermart.AccrualStatusNone,
+			AccrualAmount: moneys.Money{},
+		}
 	case http.StatusTooManyRequests:
 		errResp = fmt.Errorf("%w{retry-after=%vs}", errAccuralTooManyRequests, response.Header.Get("Retry-After"))
 	case http.StatusInternalServerError:
 		errResp = fmt.Errorf("%w", errAccuralInternalServer)
 	default:
-		errResp = fmt.Errorf("accural unhandled status, %v", response.StatusCode)
+		errResp = fmt.Errorf("accural unhandled http status, %v", response.StatusCode)
 	}
 
 	_ = response.Body.Close()

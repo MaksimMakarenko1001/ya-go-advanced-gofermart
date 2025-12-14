@@ -3,6 +3,10 @@ package v0
 import (
 	"context"
 	"errors"
+	"log"
+
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
 )
 
 type Service struct {
@@ -29,6 +33,9 @@ func (srv *Service) Do(ctx context.Context, orderNumbers []string) (map[string]A
 	if err != nil {
 		return nil, err
 	}
+	if len(orderNumbers) != len(accrualResp) {
+		log.Printf("accrual response count mismatch, expected=%d, actual=%d", len(orderNumbers), len(accrualResp))
+	}
 
 	errs := make([]error, 0, len(orderNumbers))
 	response := make(map[string]AccrualPayload, len(orderNumbers))
@@ -38,6 +45,16 @@ func (srv *Service) Do(ctx context.Context, orderNumbers []string) (map[string]A
 			response[resp.Payload.OrderNumber] = *resp.Payload
 		}
 		errs = append(errs, err)
+	}
+
+	for _, number := range orderNumbers {
+		if _, exists := response[number]; !exists {
+			response[number] = AccrualPayload{
+				OrderNumber:   number,
+				AccrualStatus: gofermart.AccrualStatusNone,
+				AccrualAmount: moneys.Money{},
+			}
+		}
 	}
 
 	return response, errors.Join(errs...)

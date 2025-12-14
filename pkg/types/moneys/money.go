@@ -20,7 +20,11 @@ func (m Money) Add(other Money) Money {
 }
 
 func (m Money) String() string {
-	return fmt.Sprintln(m.amount)
+	return fmt.Sprint(m.amount)
+}
+
+func (m Money) Amount() int64 {
+	return m.amount
 }
 
 func (m Money) MarshalJSON() ([]byte, error) {
