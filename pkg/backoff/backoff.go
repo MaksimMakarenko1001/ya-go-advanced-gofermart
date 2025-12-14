@@ -29,40 +29,41 @@ func NewBackoff(
 func (b *Backoff) WithRetry() func(retried) retried {
 	return func(fn retried) retried {
 		return func(ctx context.Context) error {
-			for attempt := range b.maxRetries + 1 {
-				if err := b.doAttempt(ctx, fn, attempt, b.t0); err != nil {
+			for attempt := uint16(0); ; attempt++ {
+				ok, err := b.doAttempt(ctx, fn, attempt, b.t0)
+				if err != nil {
 					return err
 				}
+				if ok {
+					return nil
+				}
 			}
-			return nil
 		}
 	}
 }
 
-func (b *Backoff) doAttempt(ctx context.Context, fn retried, attempt uint16, delay time.Duration) error {
-	var err error
-
+func (b *Backoff) doAttempt(ctx context.Context, fn retried, attempt uint16, delay time.Duration) (ok bool, err error) {
 	select {
 	case <-ctx.Done():
-		err = ctx.Err()
+		return false, ctx.Err()
 	default:
-		errAttempt := fn(ctx)
-		if errAttempt == nil {
-			break
-		}
-
-		if b.errClassifyFunc(errAttempt) == NonRetriable {
-			err = fmt.Errorf("non retriable, %w", errAttempt)
-		}
-
-		log.Printf("attempt #%d failed: %v", attempt+1, errAttempt)
-		if attempt < b.maxRetries {
-			log.Printf("retrying in %vs...", delay.Seconds())
-			time.Sleep(delay)
-		} else {
-			err = fmt.Errorf("max attempts reached, %w", err)
-		}
 	}
 
-	return err
+	err = fn(ctx)
+	if err == nil {
+		return true, nil
+	}
+
+	log.Printf("attempt #%d failed: %v", attempt+1, err)
+	if b.errClassifyFunc(err) == NonRetriable {
+		return false, fmt.Errorf("non retriable, %w", err)
+	}
+	if b.maxRetries-attempt < 1 {
+		return false, fmt.Errorf("max attempts reached, %w", err)
+	}
+
+	log.Printf("retrying in %vs...", delay.Seconds())
+	time.Sleep(delay)
+
+	return false, nil
 }

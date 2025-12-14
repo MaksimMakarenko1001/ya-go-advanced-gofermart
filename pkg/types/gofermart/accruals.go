@@ -1,7 +1,7 @@
 package gofermart
 
 const (
-	AccrualStatusNew        AccrualStatusType = "NEW"
+	AccrualStatusNone       AccrualStatusType = "NONE"
 	AccrualStatusRegistered AccrualStatusType = "REGISTERED"
 	AccrualStatusInvalid    AccrualStatusType = "INVALID"
 	AccrualStatusProcessing AccrualStatusType = "PROCESSING"

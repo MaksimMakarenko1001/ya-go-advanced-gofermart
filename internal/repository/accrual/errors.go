@@ -9,7 +9,6 @@ import (
 
 var (
 	errAccuralInternalServer  = errors.New("accural internal server error")
-	errAccuralNoContent       = errors.New("accural no content")
 	errAccuralTooManyRequests = errors.New("accural too many requests")
 )
 

@@ -76,5 +76,5 @@ func (cfg *diConfig) loadFromEnv() {
 }
 
 type HTTPConfig struct {
-	Address string `env:"address" envDefault:":8080"`
+	Address string `env:"address" envDefault:":8090"`
 }

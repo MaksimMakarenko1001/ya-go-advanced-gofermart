@@ -8,6 +8,14 @@ func ValuesToList[K comparable, V any](m map[K]V) (l []V) {
 	return l
 }
 
+func KeysToList[K comparable, V any](m map[K]V) (l []K) {
+	l = make([]K, 0, len(m))
+	for k := range m {
+		l = append(l, k)
+	}
+	return l
+}
+
 func Select[T, S any](l []T, f func(x T) S) (s []S) {
 	s = make([]S, 0, len(l))
 	for _, v := range l {
