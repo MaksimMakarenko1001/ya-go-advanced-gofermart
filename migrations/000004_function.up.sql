@@ -42,6 +42,7 @@ begin
             select src.withdrawal_amount, src.created_at, src.updated_at, order_ins.id
                 from withdrawal_row as src, order_ins
         ),
+        --*** TODO delete that when auth will get ready ***--
         user_balance_ins as (
             insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
             select src.accrual_amount, src.withdrawal_amount, src.updated_at, src.updated_at, src.user_id
@@ -51,15 +52,7 @@ begin
                 withdrawal_amount = ins.withdrawal_amount + excluded.withdrawal_amount,
                 updated_at = excluded.updated_at
         )
-        --*** TODO replace user_balance_ins cte with code below when auth will get ready ***--
-        -- user_balance_upd as (
-        --     update orders.user_balances as upd set
-        --         updated_at = src.updated_at,
-        --         accrual_amount = upd.accrual_amount + src.accrual_amount,
-        --         withdrawal_amount = upd.withdrawal_amount + src.withdrawal_amount
-        --     from user_balance_row as src
-        --     where upd.user_id = src.user_id
-        -- )
+       --*** TODO delete that when auth will get ready ***--
     select cte.id from order_ins as cte
         into _ins_order_id
     ;
