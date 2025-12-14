@@ -55,7 +55,7 @@ func (r *Repository) OrdersListAccrualsByOrderStatus(ctx context.Context, status
 }
 
 func (r *Repository) OrdersUpdateAccruals(
-	ctx context.Context, orders []entity.OrderUpdate, accruals []entity.AccrualUpdate, userBalances []entity.UserBalanceUpdate,
+	ctx context.Context, orders []entity.Order, accruals []entity.Accrual, userBalances []entity.UserBalance,
 ) (orderUpdatedNumbers []string, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,

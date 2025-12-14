@@ -112,7 +112,8 @@ begin
             update orders.accruals as upd set 
                 updated_at = src.updated_at,
                 accrual_status = src.accrual_status,
-                accrual_amount = src.accrual_amount
+                accrual_amount = src.accrual_amount,
+                accrued_at = src.accrued_at
             from accrual_cte as src
             where upd.order_id = src.order_id
         ),
