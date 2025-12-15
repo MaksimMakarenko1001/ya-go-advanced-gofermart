@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/createUserOrders/v0"
+	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
@@ -28,7 +28,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 
 	ts := time.Now()
 
-	createResp, err := srv.orderRepository.OrdersCreate(ctx, r.OrderNumber,
+	createResp, err := srv.orderRepository.OrdersCreateAccrual(ctx, r.OrderNumber,
 		entity.Order{
 			OrderNumber: r.OrderNumber,
 			OrderStatus: gofermart.OrderStatusNew.String(),
@@ -40,10 +40,6 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 			AccrualStatus: gofermart.AccrualStatusNew.String(),
 			CreatedAt:     ts,
 			UpdatedAt:     ts,
-		},
-		entity.Withdrawal{
-			CreatedAt: ts,
-			UpdatedAt: ts,
 		},
 		entity.UserBalance{
 			CreatedAt: ts,

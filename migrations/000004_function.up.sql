@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION orders.orders_create(_order_number text, _order json, _accrual json, _withdrawal json, _user_balance json)
+CREATE OR REPLACE FUNCTION orders.orders_create_accrual(_order_number text, _order json, _accrual json, _user_balance json)
  RETURNS json
  LANGUAGE plpgsql
 AS $function$
@@ -20,9 +20,6 @@ begin
         accrual_row as (
             select * from json_populate_record(null::orders.accruals, _accrual)
         ),
-        withdrawal_row as (
-            select * from json_populate_record(null::orders.withdrawals, _withdrawal)
-        ),
         user_balance_row as (
             select * from json_populate_record(null::orders.user_balances, _user_balance)
         ),
@@ -36,11 +33,6 @@ begin
             insert into orders.accruals (accrual_status, accrual_amount, created_at, updated_at, order_id)
             select src.accrual_status, src.accrual_amount, src.created_at, src.updated_at, order_ins.id
                 from accrual_row as src, order_ins
-        ),
-        withdrawal_ins as (
-            insert into orders.withdrawals (withdrawal_amount, created_at, updated_at, order_id)
-            select src.withdrawal_amount, src.created_at, src.updated_at, order_ins.id
-                from withdrawal_row as src, order_ins
         ),
         --*** TODO delete that when auth will get ready ***--
         user_balance_ins as (

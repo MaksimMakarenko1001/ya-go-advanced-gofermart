@@ -7,12 +7,11 @@ import (
 )
 
 type OrderRepository interface {
-	OrdersCreate(
+	OrdersCreateAccrual(
 		ctx context.Context,
 		orderNumber string,
 		order entity.Order,
 		accrual entity.Accrual,
-		withdrawal entity.Withdrawal,
 		userBalance entity.UserBalance,
 	) (resp *Response, err error)
 }

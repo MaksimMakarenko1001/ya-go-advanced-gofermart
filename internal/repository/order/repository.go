@@ -5,7 +5,7 @@ import (
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
-	createUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/createUserOrders/v0"
+	postUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
 )
 
@@ -19,19 +19,18 @@ func New(db *db.PGConnect) *Repository {
 	}
 }
 
-func (r *Repository) OrdersCreate(
+func (r *Repository) OrdersCreateAccrual(
 	ctx context.Context,
 	orderNumber string,
 	order entity.Order,
 	accrual entity.Accrual,
-	withdrawal entity.Withdrawal,
 	userBalance entity.UserBalance,
-) (resp *createUserOrders.Response, err error) {
+) (resp *postUserOrders.Response, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
 		&resp,
-		"select orders.orders_create(_order_number=>$1, _order=>$2, _accrual=>$3, _withdrawal=>$4, _user_balance=>$5);",
-		orderNumber, order, accrual, withdrawal, userBalance,
+		"select orders.orders_create(_order_number=>$1, _order=>$2, _accrual=>$3, _user_balance=>$4);",
+		orderNumber, order, accrual, userBalance,
 	)
 	if err != nil {
 		return nil, err

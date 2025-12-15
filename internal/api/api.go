@@ -6,34 +6,34 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
-	createUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/createUserOrders/v0"
 	getUserBalanceHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserBalance/v0"
 	listUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/listUserOrders/v0"
-	createUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/createUserOrders/v0"
+	postUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserOrders/v0"
 	getUserBalanceService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	listUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
+	postUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 )
 
 type API struct {
 	router *chi.Mux
 
-	createUserOrdersService *createUserOrdersService.Service
-	listUserOrdersService   *listUserOrdersService.Service
-	getUserBalanceService   *getUserBalanceService.Service
+	postUserOrdersService *postUserOrdersService.Service
+	listUserOrdersService *listUserOrdersService.Service
+	getUserBalanceService *getUserBalanceService.Service
 }
 
 func New(
 	// logger logger.HTTPLogger,
-	createUserOrdersService *createUserOrdersService.Service,
+	postUserOrdersService *postUserOrdersService.Service,
 	listUserOrdersService *listUserOrdersService.Service,
 	getUserBalanceService *getUserBalanceService.Service,
 ) *API {
 	return &API{
 		router: chi.NewRouter(),
 		// logger:             logger,
-		createUserOrdersService: createUserOrdersService,
-		listUserOrdersService:   listUserOrdersService,
-		getUserBalanceService:   getUserBalanceService,
+		postUserOrdersService: postUserOrdersService,
+		listUserOrdersService: listUserOrdersService,
+		getUserBalanceService: getUserBalanceService,
 	}
 }
 
@@ -41,13 +41,13 @@ func (api API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	api.router.ServeHTTP(w, r)
 }
 
-func (api API) HandleCreateUserOrders(middlewares ...handler.Middleware) {
-	var h http.Handler = createUserOrdersHandler.Handle(api.createUserOrdersService.Do)
+func (api API) HandlePostUserOrders(middlewares ...handler.Middleware) {
+	var h http.Handler = postUserOrdersHandler.Handle(api.postUserOrdersService.Do)
 
 	middlewares = append(middlewares, handler.MiddlewareTypeContentTextPlain)
 	h = handler.Conveyor(h, middlewares...)
 
-	api.router.Post(createUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+	api.router.Post(postUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }
