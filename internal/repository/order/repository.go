@@ -83,3 +83,17 @@ func (r *Repository) OrdersListAccrualsByUserId(ctx context.Context, userId int6
 
 	return items, nil
 }
+
+func (r *Repository) OrdersGetUserBalanceByUserId(ctx context.Context, userId int64) (balance *entity.UserBalance, err error) {
+	err = r.db.QueryWithOneResultJSON(
+		ctx,
+		&balance,
+		"select orders.orders_get_user_balance_by_user_id(_user_id=>$1);",
+		userId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
+}
