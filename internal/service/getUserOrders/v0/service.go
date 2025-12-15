@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/listUserOrders/v0"
+	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
