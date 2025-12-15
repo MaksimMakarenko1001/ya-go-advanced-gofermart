@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,10 +10,16 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 )
 
-func WriteJSONResult(w http.ResponseWriter, response []byte, statusCode int) {
+func WriteJSONResult(w http.ResponseWriter, response any, statusCode int) {
+	resp, err := json.Marshal(response)
+	if err != nil {
+		WriteError(w, fmt.Errorf("response not ok, %w", err))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	if _, err := w.Write(response); err != nil {
+	if _, err := w.Write(resp); err != nil {
 		WriteError(w, fmt.Errorf("write json not ok, %w", err))
 	}
 }

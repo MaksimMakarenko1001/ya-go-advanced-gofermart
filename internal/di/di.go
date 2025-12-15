@@ -14,6 +14,7 @@ import (
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	createUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/createUserOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
+	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	listUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
@@ -33,6 +34,7 @@ type DI struct {
 		accrueNewOrdersService  *accrueNewOrders.Service
 		createUserOrdersService *createUserOrders.Service
 		listUserOrdersService   *listUserOrders.Service
+		getUserBalance          *getUserBalance.Service
 	}
 	workers struct {
 		accrueNew        *worker.Worker
@@ -86,6 +88,8 @@ func (di *DI) initServices() {
 	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
 	di.services.createUserOrdersService = createUserOrders.New(di.repositories.order)
 	di.services.listUserOrdersService = listUserOrders.New(di.repositories.order)
+	di.services.getUserBalance = getUserBalance.New(di.repositories.order)
+
 }
 
 func (di *DI) initWorkers() {
@@ -104,10 +108,12 @@ func (di *DI) initAPI() {
 		// logger.New(di.config.Logger),
 		di.services.createUserOrdersService,
 		di.services.listUserOrdersService,
+		di.services.getUserBalance,
 	)
 
 	di.api.external.HandleCreateUserOrders()
 	di.api.external.HandleListUserOrders()
+	di.api.external.HandleGetUserBalance()
 }
 
 func (di *DI) Start() error {

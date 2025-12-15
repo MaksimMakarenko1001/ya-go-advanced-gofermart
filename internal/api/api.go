@@ -7,8 +7,10 @@ import (
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
 	createUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/createUserOrders/v0"
+	getUserBalanceHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserBalance/v0"
 	listUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/listUserOrders/v0"
 	createUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/createUserOrders/v0"
+	getUserBalanceService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	listUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
 )
 
@@ -17,18 +19,21 @@ type API struct {
 
 	createUserOrdersService *createUserOrdersService.Service
 	listUserOrdersService   *listUserOrdersService.Service
+	getUserBalanceService   *getUserBalanceService.Service
 }
 
 func New(
 	// logger logger.HTTPLogger,
 	createUserOrdersService *createUserOrdersService.Service,
 	listUserOrdersService *listUserOrdersService.Service,
+	getUserBalanceService *getUserBalanceService.Service,
 ) *API {
 	return &API{
 		router: chi.NewRouter(),
 		// logger:             logger,
 		createUserOrdersService: createUserOrdersService,
 		listUserOrdersService:   listUserOrdersService,
+		getUserBalanceService:   getUserBalanceService,
 	}
 }
 
@@ -53,6 +58,16 @@ func (api API) HandleListUserOrders(middlewares ...handler.Middleware) {
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Get(listUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (api API) HandleGetUserBalance(middlewares ...handler.Middleware) {
+	var h http.Handler = getUserBalanceHandler.Handle(api.getUserBalanceService.Do)
+
+	h = handler.Conveyor(h, middlewares...)
+
+	api.router.Get(getUserBalanceHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }

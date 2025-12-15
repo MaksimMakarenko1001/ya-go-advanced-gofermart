@@ -1,0 +1,11 @@
+package v0
+
+import (
+	"context"
+
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
+)
+
+type OrderRepository interface {
+	OrdersGetUserBalanceByUserId(ctx context.Context, userId int64) (balance *entity.UserBalance, err error)
+}

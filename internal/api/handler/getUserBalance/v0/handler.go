@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
-	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
 )
 
-const MethodPath = "/api/user/orders"
+const MethodPath = "/api/user/balance"
 const Method = http.MethodGet
 
 type HandlerFunc func(ctx context.Context, r Request) (resp *Response, err error)
@@ -19,15 +18,8 @@ type Request struct {
 }
 
 type Response struct {
-	StatusCode int
-	Accruals   []AccrualItem
-}
-
-type AccrualItem struct {
-	Number     string                    `json:"number"`
-	Status     gofermart.OrderStatusType `json:"status"`
-	Accrual    *moneys.Money             `json:"accrual,omitempty"`
-	UploadedAt string                    `json:"uploaded_at"`
+	Current   moneys.Money `json:"current"`
+	Withdrawn moneys.Money `json:"withdrawn"`
 }
 
 func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
@@ -40,6 +32,6 @@ func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		handler.WriteJSONResult(w, resp.Accruals, resp.StatusCode)
+		handler.WriteJSONResult(w, resp, http.StatusOK)
 	}
 }
