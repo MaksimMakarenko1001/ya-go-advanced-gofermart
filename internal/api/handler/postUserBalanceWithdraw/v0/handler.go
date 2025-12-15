@@ -33,6 +33,8 @@ func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		req.UserID = 12345
+
 		_, err := handlerFunc(r.Context(), req)
 		if err != nil {
 			handler.WriteError(w, err)

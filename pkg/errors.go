@@ -41,6 +41,12 @@ var ErrUnprocessableEntity = &Error{
 	Status:  http.StatusUnprocessableEntity,
 }
 
+var ErrPaymentRequired = &Error{
+	Message: "Payment Required",
+	Code:    "PAYMENT_REQUIRED",
+	Status:  http.StatusPaymentRequired,
+}
+
 var allowStatusError = map[int]struct{}{
 	http.StatusInternalServerError: {},
 	http.StatusNotFound:            {},
@@ -48,6 +54,7 @@ var allowStatusError = map[int]struct{}{
 	http.StatusUnauthorized:        {},
 	http.StatusConflict:            {},
 	http.StatusUnprocessableEntity: {},
+	http.StatusPaymentRequired:     {},
 }
 
 type ErrorCode string
