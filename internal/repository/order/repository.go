@@ -1,4 +1,4 @@
-package pg
+package order
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func (r *Repository) OrdersListAccrualsByOrderStatus(ctx context.Context, status
 }
 
 func (r *Repository) OrdersUpdateAccruals(
-	ctx context.Context, orders []entity.OrderUpdate, accruals []entity.AccrualUpdate, userBalances []entity.UserBalanceUpdate,
+	ctx context.Context, orders []entity.Order, accruals []entity.Accrual, userBalances []entity.UserBalance,
 ) (orderUpdatedNumbers []string, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
@@ -68,4 +68,18 @@ func (r *Repository) OrdersUpdateAccruals(
 	}
 
 	return orderUpdatedNumbers, nil
+}
+
+func (r *Repository) OrdersListAccrualsByUserId(ctx context.Context, userId int64) (items []entity.AccrualItem, err error) {
+	err = r.db.QueryWithOneResultJSON(
+		ctx,
+		&items,
+		"select orders.orders_list_accruals_by_user_id(_user_id=>$1);",
+		userId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }

@@ -58,11 +58,11 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrConflict
 	}
 	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == r.UserID {
-		return &handler.Response{Status: http.StatusOK}, nil
+		return &handler.Response{StatusCode: http.StatusOK}, nil
 	}
 	if !createResp.Ok {
 		return nil, fmt.Errorf("order not ok, number=%s", r.OrderNumber)
 	}
 
-	return &handler.Response{Status: http.StatusAccepted}, nil
+	return &handler.Response{StatusCode: http.StatusAccepted}, nil
 }

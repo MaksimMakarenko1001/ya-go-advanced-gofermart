@@ -112,7 +112,8 @@ begin
             update orders.accruals as upd set 
                 updated_at = src.updated_at,
                 accrual_status = src.accrual_status,
-                accrual_amount = src.accrual_amount
+                accrual_amount = src.accrual_amount,
+                accrued_at = src.accrued_at
             from accrual_cte as src
             where upd.order_id = src.order_id
         ),
@@ -144,6 +145,34 @@ begin
         -- )
     select json_agg(cte.order_number) from order_upd as cte
         into _res
+    ;
+
+    return coalesce(_res, '[]'::json);
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION orders.orders_list_accruals_by_user_id(_user_id integer)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
+declare
+    _res json;
+begin
+    with cte as (
+        select * from orders.orders where user_id = _user_id
+    )
+    select 
+        json_agg(
+            json_build_object(
+                'order', to_json(cte.*),
+                'accrual', to_json(a.*)
+            )
+        )
+    into _res
+    from orders.accruals as a
+        inner join cte
+            on a.order_id = cte.id
     ;
 
     return coalesce(_res, '[]'::json);

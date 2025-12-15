@@ -10,10 +10,11 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/lock"
-	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/pg"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/order"
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	createUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/createUserOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
+	listUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
 )
@@ -22,7 +23,7 @@ type DI struct {
 	config       *diConfig
 	repositories struct {
 		accrual *accrual.Repository
-		pg      *pg.Repository
+		order   *order.Repository
 		lock    *lock.Repository
 	}
 	services struct {
@@ -31,6 +32,7 @@ type DI struct {
 		}
 		accrueNewOrdersService  *accrueNewOrders.Service
 		createUserOrdersService *createUserOrders.Service
+		listUserOrdersService   *listUserOrders.Service
 	}
 	workers struct {
 		accrueNew        *worker.Worker
@@ -75,14 +77,15 @@ func (di *DI) initRepositories() {
 		di.config.Repository.Accrual.DeltaDelay,
 	))
 	di.repositories.lock = lock.New(di.infr.db)
-	di.repositories.pg = pg.New(di.infr.db)
+	di.repositories.order = order.New(di.infr.db)
 }
 
 func (di *DI) initServices() {
 	di.services.included.getAccrualInfoByOrdersService = getAccrualInfoByOrders.New(di.config.Service.GetAccrualInfoByOrders, di.repositories.accrual)
 
-	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.pg, di.services.included.getAccrualInfoByOrdersService)
-	di.services.createUserOrdersService = createUserOrders.New(di.repositories.pg)
+	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
+	di.services.createUserOrdersService = createUserOrders.New(di.repositories.order)
+	di.services.listUserOrdersService = listUserOrders.New(di.repositories.order)
 }
 
 func (di *DI) initWorkers() {
@@ -100,8 +103,11 @@ func (di *DI) initAPI() {
 	di.api.external = api.New(
 		// logger.New(di.config.Logger),
 		di.services.createUserOrdersService,
+		di.services.listUserOrdersService,
 	)
+
 	di.api.external.HandleCreateUserOrders()
+	di.api.external.HandleListUserOrders()
 }
 
 func (di *DI) Start() error {

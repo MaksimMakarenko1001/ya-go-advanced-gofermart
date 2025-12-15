@@ -41,40 +41,43 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 	}
 
 	ts := time.Now()
-	orderUpdates := make([]entity.OrderUpdate, 0, len(items))
-	accrualUpdates := make([]entity.AccrualUpdate, 0, len(items))
+	orders := make([]entity.Order, 0, len(items))
+	accruals := make([]entity.Accrual, 0, len(items))
 	userAccrualMap := make(map[int64]moneys.Money, len(items))
-	orderUpdateHit := make(map[string]struct{}, len(items))
+	orderHits := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		payload, ok := accrualResp[item.Order.OrderNumber]
 		if !ok {
 			return fmt.Errorf("order accrual not ok, %s", item.Order.OrderNumber)
 		}
 
-		orderUpdateHit[item.Order.OrderNumber] = struct{}{}
+		orderHits[item.Order.OrderNumber] = struct{}{}
 
+		var accruedAt *time.Time
 		var orderStatus gofermart.OrderStatusType
 		switch payload.AccrualStatus {
 		case gofermart.AccrualStatusInvalid, gofermart.AccrualStatusNone:
 			orderStatus = gofermart.OrderStatusInvalid
-		case gofermart.AccrualStatusProcessed:
-			orderStatus = gofermart.OrderStatusProcessed
 		case gofermart.AccrualStatusRegistered, gofermart.AccrualStatusProcessing:
 			orderStatus = gofermart.OrderStatusProcessing
+		case gofermart.AccrualStatusProcessed:
+			accruedAt = &ts
+			orderStatus = gofermart.OrderStatusProcessed
 		default:
 			orderStatus = gofermart.OrderStatusNone
 		}
 
-		orderUpdates = append(orderUpdates, entity.OrderUpdate{
+		orders = append(orders, entity.Order{
 			OrderNumber: payload.OrderNumber,
 			OrderStatus: orderStatus.String(),
 			UpdatedAt:   ts,
 		})
-		accrualUpdates = append(accrualUpdates, entity.AccrualUpdate{
+		accruals = append(accruals, entity.Accrual{
 			AccrualStatus: payload.AccrualStatus.String(),
 			AccrualAmount: payload.AccrualAmount.Amount(),
 			UpdatedAt:     ts,
 			OrderID:       item.Accrual.OrderID,
+			AccruedAt:     accruedAt,
 		})
 
 		userAccrual, ok := userAccrualMap[item.Order.UserID]
@@ -85,26 +88,25 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 		userAccrualMap[item.Order.UserID] = userAccrual
 	}
 
-	userBalanceUpdates := make([]entity.UserBalanceUpdate, 0, len(userAccrualMap))
+	userBalanceUpdates := make([]entity.UserBalance, 0, len(userAccrualMap))
 	for userId, accrual := range userAccrualMap {
-		userBalanceUpdates = append(userBalanceUpdates, entity.UserBalanceUpdate{
-			AccrualAmount:    accrual.Amount(),
-			WithdrawalAmount: 0,
-			UpdatedAt:        ts,
-			UserID:           userId,
+		userBalanceUpdates = append(userBalanceUpdates, entity.UserBalance{
+			AccrualAmount: accrual.Amount(),
+			UpdatedAt:     ts,
+			UserID:        userId,
 		})
 	}
 
-	orderUpdatedNumbers, err := srv.orderRepository.OrdersUpdateAccruals(ctx, orderUpdates, accrualUpdates, userBalanceUpdates)
+	orderUpdatedNumbers, err := srv.orderRepository.OrdersUpdateAccruals(ctx, orders, accruals, userBalanceUpdates)
 	if err != nil {
 		return err
 	}
 
 	for _, number := range orderUpdatedNumbers {
-		delete(orderUpdateHit, number)
+		delete(orderHits, number)
 	}
-	if len(orderUpdateHit) > 0 {
-		return fmt.Errorf("failed to update order numbers, %v", pkg.KeysToList(orderUpdateHit))
+	if len(orderHits) > 0 {
+		return fmt.Errorf("failed to update order numbers, %v", pkg.KeysToList(orderHits))
 	}
 
 	return nil
