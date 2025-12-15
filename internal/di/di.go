@@ -15,6 +15,7 @@ import (
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	getUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
+	getUserWithdrawals "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdraw "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
 	postUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
@@ -37,6 +38,7 @@ type DI struct {
 		getUserOrdersService           *getUserOrders.Service
 		getUserBalanceService          *getUserBalance.Service
 		postUserBalanceWithdrawService *postUserBalanceWithdraw.Service
+		getUserWithdrawalsService      *getUserWithdrawals.Service
 	}
 	workers struct {
 		accrueNew        *worker.Worker
@@ -92,6 +94,7 @@ func (di *DI) initServices() {
 	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order)
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order)
 	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order)
+	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order)
 
 }
 
@@ -113,12 +116,14 @@ func (di *DI) initAPI() {
 		di.services.getUserOrdersService,
 		di.services.getUserBalanceService,
 		di.services.postUserBalanceWithdrawService,
+		di.services.getUserWithdrawalsService,
 	)
 
 	di.api.external.HandlePostUserOrders()
-	di.api.external.HandleListUserOrders()
+	di.api.external.HandleGetUserOrders()
 	di.api.external.HandleGetUserBalance()
 	di.api.external.HandlePostUserBalanceWithdraw()
+	di.api.external.HandleGetUserWithdrawals()
 }
 
 func (di *DI) Start() error {

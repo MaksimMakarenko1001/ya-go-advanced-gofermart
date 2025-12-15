@@ -8,10 +8,12 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
 	getUserBalanceHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserBalance/v0"
 	getUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserOrders/v0"
+	getUserWithdrawalsHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserWithdrawals/v0"
 	postUserBalanceWithdrawHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserBalanceWithdraw/v0"
 	postUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserOrders/v0"
 	getUserBalanceService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	getUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
+	getUserWithdrawalsService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdrawService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
 	postUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 )
@@ -23,6 +25,7 @@ type API struct {
 	getUserOrdersService           *getUserOrdersService.Service
 	getUserBalanceService          *getUserBalanceService.Service
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service
+	getUserWithdrawalsService      *getUserWithdrawalsService.Service
 }
 
 func New(
@@ -31,6 +34,7 @@ func New(
 	getUserOrdersService *getUserOrdersService.Service,
 	getUserBalanceService *getUserBalanceService.Service,
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service,
+	getUserWithdrawalsService *getUserWithdrawalsService.Service,
 ) *API {
 	return &API{
 		router: chi.NewRouter(),
@@ -39,6 +43,7 @@ func New(
 		getUserOrdersService:           getUserOrdersService,
 		getUserBalanceService:          getUserBalanceService,
 		postUserBalanceWithdrawService: postUserBalanceWithdrawService,
+		getUserWithdrawalsService:      getUserWithdrawalsService,
 	}
 }
 
@@ -57,7 +62,7 @@ func (api API) HandlePostUserOrders(middlewares ...handler.Middleware) {
 	})
 }
 
-func (api API) HandleListUserOrders(middlewares ...handler.Middleware) {
+func (api API) HandleGetUserOrders(middlewares ...handler.Middleware) {
 	var h http.Handler = getUserOrdersHandler.Handle(api.getUserOrdersService.Do)
 
 	h = handler.Conveyor(h, middlewares...)
@@ -84,6 +89,16 @@ func (api API) HandlePostUserBalanceWithdraw(middlewares ...handler.Middleware) 
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Post(postUserBalanceWithdrawHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (api API) HandleGetUserWithdrawals(middlewares ...handler.Middleware) {
+	var h http.Handler = getUserWithdrawalsHandler.Handle(api.getUserWithdrawalsService.Do)
+
+	h = handler.Conveyor(h, middlewares...)
+
+	api.router.Get(getUserWithdrawalsHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }

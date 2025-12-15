@@ -117,3 +117,16 @@ func (r *Repository) OrdersGetUserBalanceByUserId(ctx context.Context, userId in
 
 	return balance, nil
 }
+func (r *Repository) OrdersListWithdrawalsByUserId(ctx context.Context, userId int64) (items []entity.WithdrawalItem, err error) {
+	err = r.db.QueryWithOneResultJSON(
+		ctx,
+		&items,
+		"select orders.orders_list_withdrawals_by_user_id(_user_id=>$1);",
+		userId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
