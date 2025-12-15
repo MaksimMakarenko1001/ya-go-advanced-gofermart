@@ -7,11 +7,13 @@ import (
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
 	getUserBalanceHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserBalance/v0"
-	listUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/listUserOrders/v0"
+	getUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserOrders/v0"
+	getUserWithdrawalsHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserWithdrawals/v0"
 	postUserBalanceWithdrawHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserBalanceWithdraw/v0"
 	postUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserOrders/v0"
 	getUserBalanceService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
-	listUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
+	getUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
+	getUserWithdrawalsService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdrawService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
 	postUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 )
@@ -20,25 +22,28 @@ type API struct {
 	router *chi.Mux
 
 	postUserOrdersService          *postUserOrdersService.Service
-	listUserOrdersService          *listUserOrdersService.Service
+	getUserOrdersService           *getUserOrdersService.Service
 	getUserBalanceService          *getUserBalanceService.Service
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service
+	getUserWithdrawalsService      *getUserWithdrawalsService.Service
 }
 
 func New(
 	// logger logger.HTTPLogger,
 	postUserOrdersService *postUserOrdersService.Service,
-	listUserOrdersService *listUserOrdersService.Service,
+	getUserOrdersService *getUserOrdersService.Service,
 	getUserBalanceService *getUserBalanceService.Service,
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service,
+	getUserWithdrawalsService *getUserWithdrawalsService.Service,
 ) *API {
 	return &API{
 		router: chi.NewRouter(),
 		// logger:             logger,
 		postUserOrdersService:          postUserOrdersService,
-		listUserOrdersService:          listUserOrdersService,
+		getUserOrdersService:           getUserOrdersService,
 		getUserBalanceService:          getUserBalanceService,
 		postUserBalanceWithdrawService: postUserBalanceWithdrawService,
+		getUserWithdrawalsService:      getUserWithdrawalsService,
 	}
 }
 
@@ -57,12 +62,12 @@ func (api API) HandlePostUserOrders(middlewares ...handler.Middleware) {
 	})
 }
 
-func (api API) HandleListUserOrders(middlewares ...handler.Middleware) {
-	var h http.Handler = listUserOrdersHandler.Handle(api.listUserOrdersService.Do)
+func (api API) HandleGetUserOrders(middlewares ...handler.Middleware) {
+	var h http.Handler = getUserOrdersHandler.Handle(api.getUserOrdersService.Do)
 
 	h = handler.Conveyor(h, middlewares...)
 
-	api.router.Get(listUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+	api.router.Get(getUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }
@@ -84,6 +89,16 @@ func (api API) HandlePostUserBalanceWithdraw(middlewares ...handler.Middleware) 
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Post(postUserBalanceWithdrawHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (api API) HandleGetUserWithdrawals(middlewares ...handler.Middleware) {
+	var h http.Handler = getUserWithdrawalsHandler.Handle(api.getUserWithdrawalsService.Do)
+
+	h = handler.Conveyor(h, middlewares...)
+
+	api.router.Get(getUserWithdrawalsHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }

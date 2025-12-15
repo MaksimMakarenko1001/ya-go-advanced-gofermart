@@ -14,7 +14,8 @@ import (
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
-	listUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/listUserOrders/v0"
+	getUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
+	getUserWithdrawals "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdraw "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
 	postUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
@@ -34,9 +35,10 @@ type DI struct {
 		}
 		accrueNewOrdersService         *accrueNewOrders.Service
 		postUserOrdersService          *postUserOrders.Service
-		listUserOrdersService          *listUserOrders.Service
+		getUserOrdersService           *getUserOrders.Service
 		getUserBalanceService          *getUserBalance.Service
 		postUserBalanceWithdrawService *postUserBalanceWithdraw.Service
+		getUserWithdrawalsService      *getUserWithdrawals.Service
 	}
 	workers struct {
 		accrueNew        *worker.Worker
@@ -89,9 +91,10 @@ func (di *DI) initServices() {
 
 	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
 	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order)
-	di.services.listUserOrdersService = listUserOrders.New(di.repositories.order)
+	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order)
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order)
 	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order)
+	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order)
 
 }
 
@@ -110,15 +113,17 @@ func (di *DI) initAPI() {
 	di.api.external = api.New(
 		// logger.New(di.config.Logger),
 		di.services.postUserOrdersService,
-		di.services.listUserOrdersService,
+		di.services.getUserOrdersService,
 		di.services.getUserBalanceService,
 		di.services.postUserBalanceWithdrawService,
+		di.services.getUserWithdrawalsService,
 	)
 
 	di.api.external.HandlePostUserOrders()
-	di.api.external.HandleListUserOrders()
+	di.api.external.HandleGetUserOrders()
 	di.api.external.HandleGetUserBalance()
 	di.api.external.HandlePostUserBalanceWithdraw()
+	di.api.external.HandleGetUserWithdrawals()
 }
 
 func (di *DI) Start() error {
