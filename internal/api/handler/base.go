@@ -9,9 +9,9 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 )
 
-func WriteJSONResult(w http.ResponseWriter, response []byte) {
+func WriteJSONResult(w http.ResponseWriter, response []byte, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(statusCode)
 	if _, err := w.Write(response); err != nil {
 		WriteError(w, fmt.Errorf("write json not ok, %w", err))
 	}
@@ -23,9 +23,9 @@ func WriteResult(w http.ResponseWriter, res string) {
 	io.WriteString(w, res)
 }
 
-func WriteOK(w http.ResponseWriter) {
+func WriteOK(w http.ResponseWriter, statusCode int) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(statusCode)
 }
 
 func WriteError(w http.ResponseWriter, err error) {

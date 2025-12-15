@@ -12,7 +12,7 @@ type Money struct {
 }
 
 func New(amount int64) Money {
-	return Money{amount: 0}
+	return Money{amount: amount}
 }
 
 func (m Money) Add(other Money) Money {

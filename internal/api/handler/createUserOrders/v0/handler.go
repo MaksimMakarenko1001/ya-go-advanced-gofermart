@@ -12,8 +12,6 @@ import (
 const MethodPath = "/api/user/orders"
 const Method = http.MethodPost
 
-var MiddlewareTypeContent = handler.MiddlewareTypeContentTextPlain
-
 type HandlerFunc func(ctx context.Context, r Request) (resp *Response, err error)
 
 type Request struct {
@@ -22,7 +20,7 @@ type Request struct {
 }
 
 type Response struct {
-	Status int
+	StatusCode int
 }
 
 func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
@@ -42,7 +40,6 @@ func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("Content-Type", handler.TypeContentTextPlain)
-		w.WriteHeader(resp.Status)
+		handler.WriteOK(w, resp.StatusCode)
 	}
 }

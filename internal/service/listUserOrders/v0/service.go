@@ -2,15 +2,14 @@ package v0
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
-	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/createUserOrders/v0"
-	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
-	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service"
+	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/listUserOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
 )
 
 type Service struct {
@@ -22,47 +21,47 @@ func New(orderRepository OrderRepository) *Service {
 }
 
 func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Response, err error) {
-	if !service.IsLuhnValid(r.OrderNumber) {
-		return nil, pkg.ErrUnprocessableEntity
-	}
-
-	ts := time.Now()
-
-	createResp, err := srv.orderRepository.OrdersCreate(ctx, r.OrderNumber,
-		entity.Order{
-			OrderNumber: r.OrderNumber,
-			OrderStatus: gofermart.OrderStatusNew.String(),
-			CreatedAt:   ts,
-			UpdatedAt:   ts,
-			UserID:      r.UserID,
-		},
-		entity.Accrual{
-			AccrualStatus: gofermart.AccrualStatusNew.String(),
-			CreatedAt:     ts,
-			UpdatedAt:     ts,
-		},
-		entity.Withdrawal{
-			CreatedAt: ts,
-			UpdatedAt: ts,
-		},
-		entity.UserBalance{
-			CreatedAt: ts,
-			UpdatedAt: ts,
-			UserID:    r.UserID,
-		},
-	)
+	items, err := srv.orderRepository.OrdersListAccrualsByUserId(ctx, r.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId != r.UserID {
-		return nil, pkg.ErrConflict
-	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == r.UserID {
-		return &handler.Response{Status: http.StatusOK}, nil
-	}
-	if !createResp.Ok {
-		return nil, fmt.Errorf("order not ok, number=%s", r.OrderNumber)
+
+	length := len(items)
+	if length == 0 {
+		return &handler.Response{
+			StatusCode: http.StatusNoContent,
+			Accruals:   []handler.AccrualItem{},
+		}, nil
 	}
 
-	return &handler.Response{Status: http.StatusAccepted}, nil
+	accruals := make([]accrualItem, 0, length)
+	for _, item := range items {
+		accrual := accrualItem{
+			AccrualItem: handler.AccrualItem{
+				Number:     item.Order.OrderNumber,
+				Status:     gofermart.OrderStatusType(item.Order.OrderStatus),
+				UploadedAt: item.Order.CreatedAt.Format(time.RFC3339),
+			},
+			sortTS: item.Order.CreatedAt,
+		}
+
+		if item.Accrual.AccruedAt != nil {
+			accrual.Accrual = pkg.ToPtr(moneys.New(item.Accrual.AccrualAmount))
+		}
+		accruals = append(accruals, accrual)
+	}
+
+	slices.SortFunc(accruals, func(a, b accrualItem) int {
+		return a.sortTS.Compare(b.sortTS)
+	})
+
+	resp = &handler.Response{
+		StatusCode: http.StatusOK,
+		Accruals:   make([]handler.AccrualItem, 0, length),
+	}
+	for _, accrual := range accruals {
+		resp.Accruals = append(resp.Accruals, accrual.Convert())
+	}
+
+	return resp, nil
 }
