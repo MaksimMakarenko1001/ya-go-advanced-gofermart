@@ -1,6 +1,6 @@
 module github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git
 
-go 1.25.4
+go 1.24.11
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
