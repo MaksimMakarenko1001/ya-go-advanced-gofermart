@@ -14,14 +14,23 @@ import (
 
 type Service struct {
 	orderRepository OrderRepository
+	jwtRepository   JwtRepository
 }
 
-func New(orderRepository OrderRepository) *Service {
-	return &Service{orderRepository: orderRepository}
+func New(orderRepository OrderRepository, jwtRepository JwtRepository) *Service {
+	return &Service{
+		orderRepository: orderRepository,
+		jwtRepository:   jwtRepository,
+	}
 }
 
 func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Response, err error) {
-	items, err := srv.orderRepository.OrdersListAccrualsByUserId(ctx, r.UserID)
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := srv.orderRepository.OrdersListAccrualsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +61,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	}
 
 	slices.SortFunc(accruals, func(a, b accrualItem) int {
-		return a.sortTS.Compare(b.sortTS)
+		return -1 * a.sortTS.Compare(b.sortTS)
 	})
 
 	resp = &handler.Response{

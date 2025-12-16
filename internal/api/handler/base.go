@@ -10,6 +10,10 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 )
 
+const (
+	HeaderAccessToken = "X-Access-Token"
+)
+
 func WriteJSONResult(w http.ResponseWriter, response any, statusCode int) {
 	resp, err := json.Marshal(response)
 	if err != nil {

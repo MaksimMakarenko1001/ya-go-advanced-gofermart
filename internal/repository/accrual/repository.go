@@ -70,12 +70,8 @@ func (r *Repository) sendWithBackoff(ctx context.Context, orderNumber string) (r
 }
 
 func (r *Repository) send(ctx context.Context, orderNumber string) (res *srv.AccrualPayload, err error) {
-	u := url.URL{
-		Scheme: "http",
-		Host:   r.address,
-		Path:   "/api/orders/" + url.PathEscape(orderNumber),
-	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	path := "/api/orders/" + url.PathEscape(orderNumber)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, r.address+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("accural request not ok, %w", err)
 	}

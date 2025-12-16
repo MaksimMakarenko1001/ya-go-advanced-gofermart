@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 )
 
 const (
@@ -24,7 +26,7 @@ func Conveyor(h http.Handler, middlewares ...Middleware) http.Handler {
 func MiddlewareTypeContentTextPlain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 		if rq.Header.Get("Content-Type") != TypeContentTextPlain {
-			http.Error(w, "not supported Content-Type", http.StatusBadRequest)
+			WriteError(w, pkg.ErrBadRequest.SetInfo("not supported Content-Type"))
 			return
 		}
 
@@ -35,7 +37,7 @@ func MiddlewareTypeContentTextPlain(next http.Handler) http.Handler {
 func MiddlewareTypeContentApplicationJSON(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
 		if rq.Header.Get("Content-Type") != TypeContentApplicationJSON {
-			http.Error(w, "not supported Content-Type", http.StatusBadRequest)
+			WriteError(w, pkg.ErrBadRequest.SetInfo("not supported Content-Type"))
 			return
 		}
 
@@ -60,7 +62,7 @@ func MiddlewareCompress(next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			zr, err := gzip.NewReader(r.Body)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				WriteError(w, err)
 				return
 			}
 

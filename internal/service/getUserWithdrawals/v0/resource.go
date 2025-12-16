@@ -13,7 +13,7 @@ type withdrawalItem struct {
 
 func (wi withdrawalItem) Convert() handler.WithdrawalItem {
 	return handler.WithdrawalItem{
-		Number:      wi.Number,
+		Order:       wi.Order,
 		Sum:         wi.Sum,
 		ProcessedAt: wi.ProcessedAt,
 	}

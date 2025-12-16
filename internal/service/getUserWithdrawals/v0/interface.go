@@ -7,5 +7,9 @@ import (
 )
 
 type OrderRepository interface {
-	OrdersListWithdrawalsByUserId(ctx context.Context, userId int64) (items []entity.WithdrawalItem, err error)
+	OrdersListWithdrawalsByUserID(ctx context.Context, UserID int64) (items []entity.WithdrawalItem, err error)
+}
+
+type JwtRepository interface {
+	JwtGetUserID(tokenString string) (int64, error)
 }

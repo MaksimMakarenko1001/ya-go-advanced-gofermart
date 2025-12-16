@@ -47,6 +47,7 @@ type WithdrawalItem struct {
 }
 
 type User struct {
+	ID           int64     `json:"id"`
 	UserName     string    `json:"username"`
 	PasswordHash string    `json:"password_hash"`
 	CreatedAt    time.Time `json:"created_at"`

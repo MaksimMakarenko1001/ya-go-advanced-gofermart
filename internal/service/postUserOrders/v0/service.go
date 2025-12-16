@@ -15,15 +15,24 @@ import (
 
 type Service struct {
 	orderRepository OrderRepository
+	jwtRepository   JwtRepository
 }
 
-func New(orderRepository OrderRepository) *Service {
-	return &Service{orderRepository: orderRepository}
+func New(orderRepository OrderRepository, jwtRepository JwtRepository) *Service {
+	return &Service{
+		orderRepository: orderRepository,
+		jwtRepository:   jwtRepository,
+	}
 }
 
 func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Response, err error) {
 	if !service.IsLuhnValid(r.OrderNumber) {
 		return nil, pkg.ErrUnprocessableEntity
+	}
+
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	if err != nil {
+		return nil, err
 	}
 
 	ts := time.Now()
@@ -34,7 +43,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 			OrderStatus: gofermart.OrderStatusNew.String(),
 			CreatedAt:   ts,
 			UpdatedAt:   ts,
-			UserID:      r.UserID,
+			UserID:      userID,
 		},
 		entity.Accrual{
 			AccrualStatus: gofermart.AccrualStatusNew.String(),
@@ -45,10 +54,10 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	if err != nil {
 		return nil, err
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId != r.UserID {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserID != userID {
 		return nil, pkg.ErrConflict
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == r.UserID {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserID == userID {
 		return &handler.Response{StatusCode: http.StatusOK}, nil
 	}
 	if !createResp.Ok {

@@ -16,9 +16,9 @@ const Method = http.MethodPost
 type HandlerFunc func(ctx context.Context, r Request) (resp *Response, err error)
 
 type Request struct {
-	Order  string       `json:"order"`
-	Sum    moneys.Money `json:"sum"`
-	UserID int64        `json:"userId"`
+	Order       string       `json:"order"`
+	Sum         moneys.Money `json:"sum"`
+	AccessToken string       `json:"accessToken"`
 }
 
 type Response struct {
@@ -33,7 +33,7 @@ func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		req.UserID = 12345
+		req.AccessToken = r.Header.Get(handler.HeaderAccessToken)
 
 		_, err := handlerFunc(r.Context(), req)
 		if err != nil {

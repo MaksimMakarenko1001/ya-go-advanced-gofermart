@@ -89,11 +89,11 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 	}
 
 	userBalanceUpdates := make([]entity.UserBalance, 0, len(userAccrualMap))
-	for userId, accrual := range userAccrualMap {
+	for userID, accrual := range userAccrualMap {
 		userBalanceUpdates = append(userBalanceUpdates, entity.UserBalance{
 			AccrualAmount: accrual.Amount(),
 			UpdatedAt:     ts,
-			UserID:        userId,
+			UserID:        userID,
 		})
 	}
 

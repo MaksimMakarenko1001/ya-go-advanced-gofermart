@@ -3,7 +3,7 @@ package accrual
 import "time"
 
 type Config struct {
-	Address        string        `env:"address" envDefault:":8080"`
+	Address        string        `env:"address" envDefault:"http://localhost:8080"`
 	Timeout        time.Duration `env:"timeout" envDefault:"3s"`
 	ThrottlingRate uint          `env:"throttling_rate" envDefault:"3"`
 	MaxRetries     uint16        `env:"max_retries" envDefault:"1"`

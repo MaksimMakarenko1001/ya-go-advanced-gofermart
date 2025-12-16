@@ -89,12 +89,12 @@ func (r *Repository) OrdersUpdateAccruals(
 	return orderUpdatedNumbers, nil
 }
 
-func (r *Repository) OrdersListAccrualsByUserId(ctx context.Context, userId int64) (items []entity.AccrualItem, err error) {
+func (r *Repository) OrdersListAccrualsByUserID(ctx context.Context, userID int64) (items []entity.AccrualItem, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
 		&items,
 		"select orders.orders_list_accruals_by_user_id(_user_id=>$1);",
-		userId,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -103,12 +103,12 @@ func (r *Repository) OrdersListAccrualsByUserId(ctx context.Context, userId int6
 	return items, nil
 }
 
-func (r *Repository) OrdersGetUserBalanceByUserId(ctx context.Context, userId int64) (balance *entity.UserBalance, err error) {
+func (r *Repository) OrdersGetUserBalanceByUserID(ctx context.Context, userID int64) (balance *entity.UserBalance, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
 		&balance,
 		"select orders.orders_get_user_balance_by_user_id(_user_id=>$1);",
-		userId,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -116,12 +116,12 @@ func (r *Repository) OrdersGetUserBalanceByUserId(ctx context.Context, userId in
 
 	return balance, nil
 }
-func (r *Repository) OrdersListWithdrawalsByUserId(ctx context.Context, userId int64) (items []entity.WithdrawalItem, err error) {
+func (r *Repository) OrdersListWithdrawalsByUserID(ctx context.Context, userID int64) (items []entity.WithdrawalItem, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
 		&items,
 		"select orders.orders_list_withdrawals_by_user_id(_user_id=>$1);",
-		userId,
+		userID,
 	)
 	if err != nil {
 		return nil, err

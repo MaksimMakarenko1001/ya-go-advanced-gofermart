@@ -12,14 +12,23 @@ import (
 
 type Service struct {
 	orderRepository OrderRepository
+	jwtRepository   JwtRepository
 }
 
-func New(orderRepository OrderRepository) *Service {
-	return &Service{orderRepository: orderRepository}
+func New(orderRepository OrderRepository, jwtRepository JwtRepository) *Service {
+	return &Service{
+		orderRepository: orderRepository,
+		jwtRepository:   jwtRepository,
+	}
 }
 
 func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Response, err error) {
-	items, err := srv.orderRepository.OrdersListWithdrawalsByUserId(ctx, r.UserID)
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := srv.orderRepository.OrdersListWithdrawalsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +45,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	for _, item := range items {
 		withdrawals = append(withdrawals, withdrawalItem{
 			WithdrawalItem: handler.WithdrawalItem{
-				Number:      item.Order.OrderNumber,
+				Order:       item.Order.OrderNumber,
 				Sum:         moneys.New(item.Withdrawal.WithdrawalAmount),
 				ProcessedAt: item.Order.CreatedAt.Format(time.RFC3339),
 			},
@@ -45,7 +54,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	}
 
 	slices.SortFunc(withdrawals, func(a, b withdrawalItem) int {
-		return a.sortTS.Compare(b.sortTS)
+		return -1 * a.sortTS.Compare(b.sortTS)
 	})
 
 	resp = &handler.Response{

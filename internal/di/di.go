@@ -10,10 +10,12 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/hash"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/jwt"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/lock"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/order"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/user"
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/auth"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	getUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
@@ -34,11 +36,13 @@ type DI struct {
 		user    *user.Repository
 		lock    *lock.Repository
 		hash    *hash.Repository
+		jwt     *jwt.Repository
 	}
 	services struct {
 		included struct {
 			getAccrualInfoByOrdersService *getAccrualInfoByOrders.Service
 		}
+		authService                    *auth.Service
 		accrueNewOrdersService         *accrueNewOrders.Service
 		postUserOrdersService          *postUserOrders.Service
 		getUserOrdersService           *getUserOrders.Service
@@ -94,19 +98,21 @@ func (di *DI) initRepositories() {
 	di.repositories.order = order.New(di.infr.db)
 	di.repositories.user = user.New(di.infr.db)
 	di.repositories.hash = hash.New(di.config.Repository.Hash)
+	di.repositories.jwt = jwt.New(di.config.Repository.Jwt)
 }
 
 func (di *DI) initServices() {
 	di.services.included.getAccrualInfoByOrdersService = getAccrualInfoByOrders.New(di.config.Service.GetAccrualInfoByOrders, di.repositories.accrual)
+	di.services.authService = auth.New(di.repositories.jwt)
 
 	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
-	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order)
-	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order)
-	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order)
-	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order)
-	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order)
-	di.services.postUserRegisterService = postUserRegister.New(di.repositories.user, di.repositories.hash)
-	di.services.postUserLoginService = postUserLogin.New(di.repositories.user, di.repositories.hash)
+	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order, di.repositories.jwt)
+	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order, di.repositories.jwt)
+	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order, di.repositories.jwt)
+	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order, di.repositories.jwt)
+	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order, di.repositories.jwt)
+	di.services.postUserRegisterService = postUserRegister.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)
+	di.services.postUserLoginService = postUserLogin.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)
 
 }
 
@@ -124,6 +130,7 @@ func (di *DI) initWorkers() {
 func (di *DI) initAPI() {
 	di.api.external = api.New(
 		// logger.New(di.config.Logger),
+		di.services.authService,
 		di.services.postUserOrdersService,
 		di.services.getUserOrdersService,
 		di.services.getUserBalanceService,
@@ -133,11 +140,11 @@ func (di *DI) initAPI() {
 		di.services.postUserLoginService,
 	)
 
-	di.api.external.HandlePostUserOrders(handler.MiddlewareTypeContentTextPlain)
-	di.api.external.HandleGetUserOrders()
-	di.api.external.HandleGetUserBalance()
-	di.api.external.HandlePostUserBalanceWithdraw(handler.MiddlewareTypeContentApplicationJSON)
-	di.api.external.HandleGetUserWithdrawals()
+	di.api.external.HandlePostUserOrders(di.api.external.WithJwtAuth, handler.MiddlewareTypeContentTextPlain)
+	di.api.external.HandleGetUserOrders(di.api.external.WithJwtAuth)
+	di.api.external.HandleGetUserBalance(di.api.external.WithJwtAuth)
+	di.api.external.HandlePostUserBalanceWithdraw(di.api.external.WithJwtAuth, handler.MiddlewareTypeContentApplicationJSON)
+	di.api.external.HandleGetUserWithdrawals(di.api.external.WithJwtAuth)
 
 	di.api.external.HandlePostUserRegister(handler.MiddlewareTypeContentApplicationJSON)
 	di.api.external.HandlePostUserLogin(handler.MiddlewareTypeContentApplicationJSON)

@@ -20,6 +20,7 @@ type Request struct {
 }
 
 type Response struct {
+	Token string
 }
 
 func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
@@ -31,12 +32,13 @@ func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		_, err := handlerFunc(r.Context(), req)
+		resp, err := handlerFunc(r.Context(), req)
 		if err != nil {
 			handler.WriteError(w, err)
 			return
 		}
 
+		w.Header().Set("Authorization", fmt.Sprintf("Bearer %v", resp.Token))
 		handler.WriteOK(w, http.StatusOK)
 	}
 }
