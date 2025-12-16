@@ -54,7 +54,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	}
 
 	slices.SortFunc(withdrawals, func(a, b withdrawalItem) int {
-		return a.sortTS.Compare(b.sortTS)
+		return -1 * a.sortTS.Compare(b.sortTS)
 	})
 
 	resp = &handler.Response{
