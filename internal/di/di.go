@@ -140,11 +140,11 @@ func (di *DI) initAPI() {
 		di.services.postUserLoginService,
 	)
 
-	di.api.external.HandlePostUserOrders(handler.MiddlewareTypeContentTextPlain)
-	di.api.external.HandleGetUserOrders()
-	di.api.external.HandleGetUserBalance()
-	di.api.external.HandlePostUserBalanceWithdraw(handler.MiddlewareTypeContentApplicationJSON)
-	di.api.external.HandleGetUserWithdrawals()
+	di.api.external.HandlePostUserOrders(di.api.external.WithJwtAuth, handler.MiddlewareTypeContentTextPlain)
+	di.api.external.HandleGetUserOrders(di.api.external.WithJwtAuth)
+	di.api.external.HandleGetUserBalance(di.api.external.WithJwtAuth)
+	di.api.external.HandlePostUserBalanceWithdraw(di.api.external.WithJwtAuth, handler.MiddlewareTypeContentApplicationJSON)
+	di.api.external.HandleGetUserWithdrawals(di.api.external.WithJwtAuth)
 
 	di.api.external.HandlePostUserRegister(handler.MiddlewareTypeContentApplicationJSON)
 	di.api.external.HandlePostUserLogin(handler.MiddlewareTypeContentApplicationJSON)
@@ -159,7 +159,6 @@ func (di *DI) Start() error {
 	err := http.ListenAndServe(di.config.HTTP.Address, handler.Conveyor(
 		di.api.external,
 		handler.MiddlewareCompress,
-		di.api.external.WithJwtAuth,
 	))
 
 	di.infr.db.Close()

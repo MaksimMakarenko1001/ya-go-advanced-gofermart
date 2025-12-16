@@ -140,27 +140,24 @@ func (api API) HandlePostUserLogin(middlewares ...handler.Middleware) {
 
 func (api API) WithJwtAuth(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		accessToken := ""
-		if authHeader := r.Header.Get("Authorization"); authHeader != "" {
-			if !strings.HasPrefix(authHeader, "Bearer ") {
-				handler.WriteError(w, fmt.Errorf("invalid authorization header format, %w", pkg.ErrBadRequest))
-				return
-			}
-
-			token := strings.TrimPrefix(authHeader, "Bearer ")
-			ok, err := api.authService.ValidateToken(r.Context(), token)
-			if err != nil {
-				handler.WriteError(w, err)
-				return
-			}
-			if !ok {
-				handler.WriteError(w, pkg.ErrUnauthorized)
-				return
-			}
-			accessToken = token
+		authHeader := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			handler.WriteError(w, fmt.Errorf("invalid authorization header format, %w", pkg.ErrUnauthorized))
+			return
 		}
 
-		r.Header.Set(handler.HeaderAccessToken, accessToken)
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		ok, err := api.authService.ValidateToken(r.Context(), token)
+		if err != nil {
+			handler.WriteError(w, err)
+			return
+		}
+		if !ok {
+			handler.WriteError(w, pkg.ErrUnauthorized)
+			return
+		}
+
+		r.Header.Set(handler.HeaderAccessToken, token)
 		h.ServeHTTP(w, r)
 	})
 }
