@@ -30,7 +30,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, err
 	}
 
-	items, err := srv.orderRepository.OrdersListAccrualsByUserId(ctx, userID)
+	items, err := srv.orderRepository.OrdersListAccrualsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

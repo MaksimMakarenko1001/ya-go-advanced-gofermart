@@ -22,6 +22,6 @@ type JwtRepository interface {
 type Response struct {
 	Ok                    bool  `json:"ok"`
 	AlreadyExists         bool  `json:"already_exists"`
-	AlreadyExistsByUserId int64 `json:"already_exists_by_user_id"`
+	AlreadyExistsByUserID int64 `json:"already_exists_by_user_id"`
 	OrderID               int64 `json:"order_id"`
 }

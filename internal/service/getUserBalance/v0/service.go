@@ -26,7 +26,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, err
 	}
 
-	balance, err := srv.orderRepository.OrdersGetUserBalanceByUserId(ctx, userID)
+	balance, err := srv.orderRepository.OrdersGetUserBalanceByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

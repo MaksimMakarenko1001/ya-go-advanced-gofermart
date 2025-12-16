@@ -54,10 +54,10 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	if err != nil {
 		return nil, err
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId != userID {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserID != userID {
 		return nil, pkg.ErrConflict
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == userID {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserID == userID {
 		return &handler.Response{StatusCode: http.StatusOK}, nil
 	}
 	if !createResp.Ok {

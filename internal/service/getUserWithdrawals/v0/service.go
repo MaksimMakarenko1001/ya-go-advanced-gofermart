@@ -28,7 +28,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, err
 	}
 
-	items, err := srv.orderRepository.OrdersListWithdrawalsByUserId(ctx, userID)
+	items, err := srv.orderRepository.OrdersListWithdrawalsByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

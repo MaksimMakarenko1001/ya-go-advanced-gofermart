@@ -7,7 +7,7 @@ import (
 )
 
 type OrderRepository interface {
-	OrdersGetUserBalanceByUserId(ctx context.Context, userID int64) (balance *entity.UserBalance, err error)
+	OrdersGetUserBalanceByUserID(ctx context.Context, userID int64) (balance *entity.UserBalance, err error)
 
 	OrdersCreateWithdrawal(
 		ctx context.Context,
