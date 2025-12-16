@@ -10,12 +10,14 @@ import (
 type Service struct {
 	userRepository UserRepository
 	hashRepository HashRepository
+	jwtRepository  JwtRepository
 }
 
-func New(userRepository UserRepository, hashRepository HashRepository) *Service {
+func New(userRepository UserRepository, hashRepository HashRepository, jwtRepository JwtRepository) *Service {
 	return &Service{
 		userRepository: userRepository,
 		hashRepository: hashRepository,
+		jwtRepository:  jwtRepository,
 	}
 }
 
@@ -28,7 +30,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrUnauthorized
 	}
 
-	hash, err := srv.hashRepository.Hash(ctx, []byte(r.Password))
+	hash, err := srv.hashRepository.HashSHA256(ctx, []byte(r.Password))
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +39,10 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrUnauthorized
 	}
 
-	return &handler.Response{}, nil
+	token, err := srv.jwtRepository.JwtGenerateToken(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &handler.Response{Token: token}, nil
 }

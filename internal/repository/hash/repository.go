@@ -17,7 +17,7 @@ func New(cfg Config) *Repository {
 	}
 }
 
-func (r *Repository) Hash(ctx context.Context, message []byte) (string, error) {
+func (r *Repository) HashSHA256(ctx context.Context, message []byte) (string, error) {
 	if r.key == "" {
 		return "", nil
 	}

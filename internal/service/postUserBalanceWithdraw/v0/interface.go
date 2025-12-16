@@ -18,6 +18,10 @@ type OrderRepository interface {
 	) (resp *Response, err error)
 }
 
+type JwtRepository interface {
+	JwtGetUserID(tokenString string) (int64, error)
+}
+
 type Response struct {
 	Ok            bool  `json:"ok"`
 	AlreadyExists bool  `json:"already_exists"`

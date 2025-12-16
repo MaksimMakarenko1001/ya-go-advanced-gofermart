@@ -10,7 +10,11 @@ type UserRepository interface {
 	UsersCreate(ctx context.Context, userName string, user entity.User) (resp *Response, err error)
 }
 type HashRepository interface {
-	Hash(ctx context.Context, message []byte) (string, error)
+	HashSHA256(ctx context.Context, message []byte) (string, error)
+}
+
+type JwtRepository interface {
+	JwtGenerateToken(userID int64) (string, error)
 }
 
 type Response struct {

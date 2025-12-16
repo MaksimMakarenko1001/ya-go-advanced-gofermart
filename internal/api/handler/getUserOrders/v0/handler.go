@@ -15,7 +15,7 @@ const Method = http.MethodGet
 type HandlerFunc func(ctx context.Context, r Request) (resp *Response, err error)
 
 type Request struct {
-	UserID int64 `json:"userId"`
+	AccessToken string `json:"accessToken"`
 }
 
 type Response struct {
@@ -33,7 +33,7 @@ type AccrualItem struct {
 func Handle(handlerFunc HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp, err := handlerFunc(r.Context(), Request{
-			UserID: 12345,
+			AccessToken: r.Header.Get(handler.HeaderAccessToken),
 		})
 		if err != nil {
 			handler.WriteError(w, err)

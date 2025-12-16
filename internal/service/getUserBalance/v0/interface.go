@@ -9,3 +9,7 @@ import (
 type OrderRepository interface {
 	OrdersGetUserBalanceByUserId(ctx context.Context, userId int64) (balance *entity.UserBalance, err error)
 }
+
+type JwtRepository interface {
+	JwtGetUserID(tokenString string) (int64, error)
+}
