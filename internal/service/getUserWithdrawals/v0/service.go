@@ -23,12 +23,12 @@ func New(orderRepository OrderRepository, jwtRepository JwtRepository) *Service 
 }
 
 func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Response, err error) {
-	userId, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := srv.orderRepository.OrdersListWithdrawalsByUserId(ctx, userId)
+	items, err := srv.orderRepository.OrdersListWithdrawalsByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

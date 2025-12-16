@@ -29,17 +29,17 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrUnprocessableEntity
 	}
 
-	userId, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	balance, err := srv.orderRepository.OrdersGetUserBalanceByUserId(ctx, userId)
+	balance, err := srv.orderRepository.OrdersGetUserBalanceByUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	if balance == nil {
-		return nil, fmt.Errorf("balance not ok, user_id=%v", userId)
+		return nil, fmt.Errorf("balance not ok, user_id=%v", userID)
 	}
 
 	if current := balance.AccrualAmount - balance.WithdrawalAmount; current < r.Sum.Amount() {
@@ -53,7 +53,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 			OrderStatus: gofermart.OrderStatusProcessed.String(),
 			CreatedAt:   ts,
 			UpdatedAt:   ts,
-			UserID:      userId,
+			UserID:      userID,
 		},
 		entity.Withdrawal{
 			WithdrawalAmount: r.Sum.Amount(),
@@ -63,7 +63,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		entity.UserBalance{
 			WithdrawalAmount: r.Sum.Amount(),
 			UpdatedAt:        ts,
-			UserID:           userId,
+			UserID:           userID,
 		},
 	)
 	if err != nil {

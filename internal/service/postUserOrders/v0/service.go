@@ -30,7 +30,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrUnprocessableEntity
 	}
 
-	userId, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
+	userID, err := srv.jwtRepository.JwtGetUserID(r.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 			OrderStatus: gofermart.OrderStatusNew.String(),
 			CreatedAt:   ts,
 			UpdatedAt:   ts,
-			UserID:      userId,
+			UserID:      userID,
 		},
 		entity.Accrual{
 			AccrualStatus: gofermart.AccrualStatusNew.String(),
@@ -54,10 +54,10 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	if err != nil {
 		return nil, err
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId != userId {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId != userID {
 		return nil, pkg.ErrConflict
 	}
-	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == userId {
+	if createResp.AlreadyExists && createResp.AlreadyExistsByUserId == userID {
 		return &handler.Response{StatusCode: http.StatusOK}, nil
 	}
 	if !createResp.Ok {
