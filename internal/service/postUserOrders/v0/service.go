@@ -41,11 +41,6 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 			CreatedAt:     ts,
 			UpdatedAt:     ts,
 		},
-		entity.UserBalance{
-			CreatedAt: ts,
-			UpdatedAt: ts,
-			UserID:    r.UserID,
-		},
 	)
 	if err != nil {
 		return nil, err

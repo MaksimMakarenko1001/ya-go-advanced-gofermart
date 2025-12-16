@@ -1,10 +1,20 @@
+CREATE TABLE IF NOT EXISTS orders.users (
+    id SERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS orders.orders (
     id SERIAL PRIMARY KEY,
     order_number TEXT UNIQUE NOT NULL,
     order_status TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
-    user_id INTEGER NOT NULL
+    user_id INTEGER NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES orders.users(id)
 );
 
 CREATE TABLE IF NOT EXISTS orders.accruals (
@@ -35,5 +45,7 @@ CREATE TABLE IF NOT EXISTS orders.user_balances (
     withdrawal_amount BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
-    user_id INTEGER UNIQUE NOT NULL
+    user_id INTEGER UNIQUE NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES orders.users(id)
 );

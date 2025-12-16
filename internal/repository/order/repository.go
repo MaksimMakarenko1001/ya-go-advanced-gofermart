@@ -25,13 +25,12 @@ func (r *Repository) OrdersCreateAccrual(
 	orderNumber string,
 	order entity.Order,
 	accrual entity.Accrual,
-	userBalance entity.UserBalance,
 ) (resp *postUserOrders.Response, err error) {
 	err = r.db.QueryWithOneResultJSON(
 		ctx,
 		&resp,
-		"select orders.orders_create_accrual(_order_number=>$1, _order=>$2, _accrual=>$3, _user_balance=>$4);",
-		orderNumber, order, accrual, userBalance,
+		"select orders.orders_create_accrual(_order_number=>$1, _order=>$2, _accrual=>$3);",
+		orderNumber, order, accrual,
 	)
 	if err != nil {
 		return nil, err

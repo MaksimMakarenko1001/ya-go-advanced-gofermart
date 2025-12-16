@@ -45,3 +45,10 @@ type WithdrawalItem struct {
 	Withdrawal Withdrawal `json:"withdrawal"`
 	Order      Order      `json:"order"`
 }
+
+type User struct {
+	UserName     string    `json:"username"`
+	PasswordHash string    `json:"password_hash"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
