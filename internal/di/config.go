@@ -7,6 +7,7 @@ import (
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/hash"
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
@@ -19,6 +20,7 @@ type diConfig struct {
 	DB         db.Config  `envPrefix:"DB_"`
 	Repository struct {
 		Accrual accrual.Config `envPrefix:"ACCRUAL_"`
+		Hash    hash.Config    `envPrefix:"HASH_"`
 	} `envPrefix:"REPOS_"`
 	Worker struct {
 		AccrueNew        worker.Config `envPrefix:"ACCRUE_NEW_"`

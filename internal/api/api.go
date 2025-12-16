@@ -10,12 +10,16 @@ import (
 	getUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserOrders/v0"
 	getUserWithdrawalsHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/getUserWithdrawals/v0"
 	postUserBalanceWithdrawHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserBalanceWithdraw/v0"
+	postUserLoginHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserLogin/v0"
 	postUserOrdersHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserOrders/v0"
+	postUserRegisterHandler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserRegister/v0"
 	getUserBalanceService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	getUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
 	getUserWithdrawalsService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdrawService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
+	postUserLoginService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserLogin/v0"
 	postUserOrdersService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
+	postUserRegisterService "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserRegister/v0"
 )
 
 type API struct {
@@ -26,6 +30,8 @@ type API struct {
 	getUserBalanceService          *getUserBalanceService.Service
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service
 	getUserWithdrawalsService      *getUserWithdrawalsService.Service
+	postUserRegisterService        *postUserRegisterService.Service
+	postUserLoginService           *postUserLoginService.Service
 }
 
 func New(
@@ -35,6 +41,8 @@ func New(
 	getUserBalanceService *getUserBalanceService.Service,
 	postUserBalanceWithdrawService *postUserBalanceWithdrawService.Service,
 	getUserWithdrawalsService *getUserWithdrawalsService.Service,
+	postUserRegisterService *postUserRegisterService.Service,
+	postUserLoginService *postUserLoginService.Service,
 ) *API {
 	return &API{
 		router: chi.NewRouter(),
@@ -44,6 +52,8 @@ func New(
 		getUserBalanceService:          getUserBalanceService,
 		postUserBalanceWithdrawService: postUserBalanceWithdrawService,
 		getUserWithdrawalsService:      getUserWithdrawalsService,
+		postUserRegisterService:        postUserRegisterService,
+		postUserLoginService:           postUserLoginService,
 	}
 }
 
@@ -54,7 +64,6 @@ func (api API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (api API) HandlePostUserOrders(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserOrdersHandler.Handle(api.postUserOrdersService.Do)
 
-	middlewares = append(middlewares, handler.MiddlewareTypeContentTextPlain)
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Post(postUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +94,6 @@ func (api API) HandleGetUserBalance(middlewares ...handler.Middleware) {
 func (api API) HandlePostUserBalanceWithdraw(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserBalanceWithdrawHandler.Handle(api.postUserBalanceWithdrawService.Do)
 
-	middlewares = append(middlewares, handler.MiddlewareTypeContentApplicationJSON)
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Post(postUserBalanceWithdrawHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +107,26 @@ func (api API) HandleGetUserWithdrawals(middlewares ...handler.Middleware) {
 	h = handler.Conveyor(h, middlewares...)
 
 	api.router.Get(getUserWithdrawalsHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (api API) HandlePostUserRegister(middlewares ...handler.Middleware) {
+	var h http.Handler = postUserRegisterHandler.Handle(api.postUserRegisterService.Do)
+
+	h = handler.Conveyor(h, middlewares...)
+
+	api.router.Post(postUserRegisterHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (api API) HandlePostUserLogin(middlewares ...handler.Middleware) {
+	var h http.Handler = postUserLoginHandler.Handle(api.postUserLoginService.Do)
+
+	h = handler.Conveyor(h, middlewares...)
+
+	api.router.Post(postUserLoginHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	})
 }

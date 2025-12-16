@@ -9,15 +9,19 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/hash"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/lock"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/order"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/user"
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
 	getUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserOrders/v0"
 	getUserWithdrawals "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserWithdrawals/v0"
 	postUserBalanceWithdraw "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
+	postUserLogin "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserLogin/v0"
 	postUserOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserOrders/v0"
+	postUserRegister "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserRegister/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
 )
@@ -27,7 +31,9 @@ type DI struct {
 	repositories struct {
 		accrual *accrual.Repository
 		order   *order.Repository
+		user    *user.Repository
 		lock    *lock.Repository
+		hash    *hash.Repository
 	}
 	services struct {
 		included struct {
@@ -39,6 +45,8 @@ type DI struct {
 		getUserBalanceService          *getUserBalance.Service
 		postUserBalanceWithdrawService *postUserBalanceWithdraw.Service
 		getUserWithdrawalsService      *getUserWithdrawals.Service
+		postUserRegisterService        *postUserRegister.Service
+		postUserLoginService           *postUserLogin.Service
 	}
 	workers struct {
 		accrueNew        *worker.Worker
@@ -84,6 +92,8 @@ func (di *DI) initRepositories() {
 	))
 	di.repositories.lock = lock.New(di.infr.db)
 	di.repositories.order = order.New(di.infr.db)
+	di.repositories.user = user.New(di.infr.db)
+	di.repositories.hash = hash.New(di.config.Repository.Hash)
 }
 
 func (di *DI) initServices() {
@@ -95,6 +105,8 @@ func (di *DI) initServices() {
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order)
 	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order)
 	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order)
+	di.services.postUserRegisterService = postUserRegister.New(di.repositories.user, di.repositories.hash)
+	di.services.postUserLoginService = postUserLogin.New(di.repositories.user, di.repositories.hash)
 
 }
 
@@ -117,13 +129,18 @@ func (di *DI) initAPI() {
 		di.services.getUserBalanceService,
 		di.services.postUserBalanceWithdrawService,
 		di.services.getUserWithdrawalsService,
+		di.services.postUserRegisterService,
+		di.services.postUserLoginService,
 	)
 
-	di.api.external.HandlePostUserOrders()
+	di.api.external.HandlePostUserOrders(handler.MiddlewareTypeContentTextPlain)
 	di.api.external.HandleGetUserOrders()
 	di.api.external.HandleGetUserBalance()
-	di.api.external.HandlePostUserBalanceWithdraw()
+	di.api.external.HandlePostUserBalanceWithdraw(handler.MiddlewareTypeContentApplicationJSON)
 	di.api.external.HandleGetUserWithdrawals()
+
+	di.api.external.HandlePostUserRegister(handler.MiddlewareTypeContentApplicationJSON)
+	di.api.external.HandlePostUserLogin(handler.MiddlewareTypeContentApplicationJSON)
 }
 
 func (di *DI) Start() error {

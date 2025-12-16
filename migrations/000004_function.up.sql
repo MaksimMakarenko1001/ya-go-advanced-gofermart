@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION orders.orders_create_accrual(_order_number text, _order json, _accrual json, _user_balance json)
+CREATE OR REPLACE FUNCTION orders.orders_create_accrual(_order_number text, _order json, _accrual json)
  RETURNS json
  LANGUAGE plpgsql
 AS $function$
@@ -20,9 +20,6 @@ begin
         accrual_row as (
             select * from json_populate_record(null::orders.accruals, _accrual)
         ),
-        user_balance_row as (
-            select * from json_populate_record(null::orders.user_balances, _user_balance)
-        ),
         order_ins as (
             insert into orders.orders as ins (order_number, order_status, created_at, updated_at, user_id)
             select src.order_number, src.order_status, src.created_at, src.updated_at, src.user_id
@@ -33,18 +30,7 @@ begin
             insert into orders.accruals (accrual_status, accrual_amount, created_at, updated_at, order_id)
             select src.accrual_status, src.accrual_amount, src.created_at, src.updated_at, order_ins.id
                 from accrual_row as src, order_ins
-        ),
-        --*** TODO delete that when auth will get ready ***--
-        user_balance_ins as (
-            insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
-            select src.accrual_amount, src.withdrawal_amount, src.updated_at, src.updated_at, src.user_id
-                from user_balance_row as src
-            on conflict (user_id) do update set
-                accrual_amount = ins.accrual_amount + excluded.accrual_amount,
-                withdrawal_amount = ins.withdrawal_amount + excluded.withdrawal_amount,
-                updated_at = excluded.updated_at
         )
-       --*** TODO delete that when auth will get ready ***--
     select cte.id from order_ins as cte
         into _ins_order_id
     ;
@@ -89,22 +75,13 @@ begin
             select src.withdrawal_amount, src.created_at, src.updated_at, order_ins.id
                 from withdrawal_row as src, order_ins
         ),
-        user_balance_ins as (
-            insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
-            select src.accrual_amount, src.withdrawal_amount, src.updated_at, src.updated_at, src.user_id
-                from user_balance_row as src
-            on conflict (user_id) do update set
-                withdrawal_amount = ins.withdrawal_amount + excluded.withdrawal_amount,
-                updated_at = excluded.updated_at
+        user_balance_upd as (
+            update orders.user_balances as upd set
+                updated_at = src.updated_at,
+                withdrawal_amount = upd.withdrawal_amount + src.withdrawal_amount
+            from user_balance_row as src
+            where upd.user_id = src.user_id
         )
-        --*** TODO replace user_balance_ins cte with code below when auth will get ready ***--
-        -- user_balance_upd as (
-        --     update orders.user_balances as upd set
-        --         updated_at = src.updated_at,
-        --         withdrawal_amount = upd.withdrawal_amount + src.withdrawal_amount
-        --     from user_balance_cte as src
-        --     where upd.user_id = src.user_id
-        -- )
     select cte.id from order_ins as cte
         into _ins_order_id
     ;
@@ -177,22 +154,13 @@ begin
             where upd.order_number = src.order_number
             returning upd.order_number
         ),
-        user_balance_ins as (
-            insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
-            select src.accrual_amount, src.withdrawal_amount, src.updated_at, src.updated_at, src.user_id
-                from user_balance_cte as src
-            on conflict (user_id) do update set
-                accrual_amount = ins.accrual_amount + excluded.accrual_amount,
-                updated_at = excluded.updated_at
+        user_balance_upd as (
+            update orders.user_balances as upd set
+                updated_at = src.updated_at,
+                accrual_amount = upd.accrual_amount + src.accrual_amount
+            from user_balance_cte as src
+            where upd.user_id = src.user_id
         )
-        --*** TODO replace user_balance_ins cte with code below when auth will get ready ***--
-        -- user_balance_upd as (
-        --     update orders.user_balances as upd set
-        --         updated_at = src.updated_at,
-        --         accrual_amount = upd.accrual_amount + src.accrual_amount
-        --     from user_balance_cte as src
-        --     where upd.user_id = src.user_id
-        -- )
     select json_agg(cte.order_number) from order_upd as cte
         into _res
     ;
@@ -269,6 +237,62 @@ begin
     into _res
     from orders.user_balances as ub
     where ub.user_id = _user_id
+    ;
+
+    return coalesce(_res, '{}'::json);
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION orders.users_create(_username text, _user json)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
+declare
+    _ins_user_id integer;
+begin
+    if exists (select 1 from orders.users where username = _username) then
+        return json_build_object(
+            'ok', false, 
+            'already_exists', true
+        );
+    end if;
+
+    with 
+        user_row as (
+            select * from json_populate_record(null::orders.users, _user)
+        ),
+        user_ins as (
+            insert into orders.users as ins (username, password_hash, created_at, updated_at)
+            select src.username, src.password_hash, src.created_at, src.updated_at
+                from user_row as src
+            returning ins.id
+        ),
+        user_balance_ins as (
+            insert into orders.user_balances as ins (accrual_amount, withdrawal_amount, created_at, updated_at, user_id)
+            select 0, 0, src.created_at, src.updated_at, user_ins.id
+                from user_row as src, user_ins
+        )
+    select cte.id from user_ins as cte
+        into _ins_user_id
+    ;
+
+    return json_build_object('ok', true, 'user_id', _ins_user_id);
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION orders.users_get_by_username(_username text)
+ RETURNS json
+ LANGUAGE plpgsql
+AS $function$
+declare
+    _res json;
+begin
+    select to_json(u.*)
+    into _res
+    from orders.users as u
+    where u.username = _username
     ;
 
     return coalesce(_res, '{}'::json);

@@ -12,7 +12,6 @@ type OrderRepository interface {
 		orderNumber string,
 		order entity.Order,
 		accrual entity.Accrual,
-		userBalance entity.UserBalance,
 	) (resp *Response, err error)
 }
 
