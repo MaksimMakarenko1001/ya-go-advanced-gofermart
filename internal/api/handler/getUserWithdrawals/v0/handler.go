@@ -23,7 +23,7 @@ type Response struct {
 }
 
 type WithdrawalItem struct {
-	Number      string       `json:"number"`
+	Order       string       `json:"order"`
 	Sum         moneys.Money `json:"sum"`
 	ProcessedAt string       `json:"processed_at"`
 }

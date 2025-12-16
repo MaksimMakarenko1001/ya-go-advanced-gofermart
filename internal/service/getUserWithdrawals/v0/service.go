@@ -45,7 +45,7 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 	for _, item := range items {
 		withdrawals = append(withdrawals, withdrawalItem{
 			WithdrawalItem: handler.WithdrawalItem{
-				Number:      item.Order.OrderNumber,
+				Order:       item.Order.OrderNumber,
 				Sum:         moneys.New(item.Withdrawal.WithdrawalAmount),
 				ProcessedAt: item.Order.CreatedAt.Format(time.RFC3339),
 			},
