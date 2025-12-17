@@ -29,7 +29,6 @@ func (lb *LinearBackoff) WithRetry() func(retried) retried {
 				if ok {
 					return nil
 				}
-
 				delay += lb.dt
 			}
 		}

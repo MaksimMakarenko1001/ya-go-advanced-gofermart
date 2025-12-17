@@ -2,12 +2,12 @@ package di
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/logger"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/hash"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/jwt"
@@ -31,6 +31,7 @@ import (
 
 type DI struct {
 	config       *diConfig
+	logger       *logger.ZapLogger
 	repositories struct {
 		accrual *accrual.Repository
 		order   *order.Repository
@@ -70,6 +71,8 @@ func (di *DI) Init(envPrefix string) {
 	di.config = &diConfig{}
 	di.config.loadConfig(envPrefix)
 
+	di.logger = logger.New(di.config.Logger)
+
 	di.initDB()
 	di.initRepositories()
 	di.initServices()
@@ -82,18 +85,18 @@ func (di *DI) initDB() {
 	di.infr.db, err = db.New(
 		di.config.DB,
 		backoff.NewLinearBackoff(
-			backoff.NewBackoff(db.ClassifyPgError, di.config.DB.MaxRetries, di.config.DB.MinDelay),
+			backoff.NewBackoff(di.logger, db.ClassifyPgError, di.config.DB.MaxRetries, di.config.DB.MinDelay),
 			di.config.DB.DeltaDelay,
 		),
 	)
 	if err != nil {
-		log.Println("db init not ok,", err.Error())
+		di.logger.Panicf("init", "db init not ok,", err.Error())
 	}
 }
 
 func (di *DI) initRepositories() {
 	di.repositories.accrual = accrual.New(di.config.Repository.Accrual, backoff.NewLinearBackoff(
-		backoff.NewBackoff(accrual.ClassifyHTTPError, di.config.Repository.Accrual.MaxRetries, di.config.Repository.Accrual.MinDelay),
+		backoff.NewBackoff(di.logger, accrual.ClassifyHTTPError, di.config.Repository.Accrual.MaxRetries, di.config.Repository.Accrual.MinDelay),
 		di.config.Repository.Accrual.DeltaDelay,
 	))
 	di.repositories.lock = lock.New(di.infr.db)
@@ -128,6 +131,7 @@ func (di *DI) initWorkers() {
 		"accrue_new",
 		"",
 		di.services.accrueNewOrdersService.Do,
+		di.logger,
 	)
 
 	di.workers.accrueProcessing = worker.New(
@@ -137,12 +141,13 @@ func (di *DI) initWorkers() {
 		"accrue_processing",
 		"",
 		di.services.accrueProcessingOrdersService.Do,
+		di.logger,
 	)
 }
 
 func (di *DI) initAPI() {
 	di.api.external = api.New(
-		// logger.New(di.config.Logger),
+		di.logger,
 		di.services.authService,
 		di.services.postUserOrdersService,
 		di.services.getUserOrdersService,
@@ -164,6 +169,7 @@ func (di *DI) initAPI() {
 }
 
 func (di *DI) Start() error {
+	di.logger.Infof("app", "app starting")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -172,10 +178,10 @@ func (di *DI) Start() error {
 
 	err := http.ListenAndServe(di.config.HTTP.Address, handler.Conveyor(
 		di.api.external,
+		di.api.external.WithLogging,
 		handler.MiddlewareCompress,
 	))
 
 	di.infr.db.Close()
-
 	return err
 }

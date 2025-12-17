@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/logger"
 )
 
 type Job func(ctx context.Context) (err error)
@@ -17,9 +18,10 @@ type Worker struct {
 	key     string
 	segment string
 	job     Job
+	logger  *logger.ZapLogger
 }
 
-func New(config Config, locker Locker, pid, key, segment string, job Job) *Worker {
+func New(config Config, locker Locker, pid, key, segment string, job Job, logger *logger.ZapLogger) *Worker {
 	return &Worker{
 		config:  config,
 		locker:  locker,
@@ -27,6 +29,7 @@ func New(config Config, locker Locker, pid, key, segment string, job Job) *Worke
 		key:     key,
 		segment: segment,
 		job:     job,
+		logger:  logger,
 	}
 }
 
@@ -49,7 +52,7 @@ func (w *Worker) run(ctx context.Context) {
 				defer cancel()
 
 				if err := w.doJob(jobCtx); err != nil {
-					log.Println(err)
+					w.logger.Errorf(w.key, err.Error())
 				}
 				time.Sleep(w.config.JobInterval - time.Since(ts))
 				<-onceCh
@@ -65,7 +68,7 @@ func (w *Worker) doJob(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to acquire lock: %w", err)
 	}
 	if !ok {
-		log.Printf("lock acquisition is not ok:{key=%s,segment=%s,pid=%s}\n", w.key, w.segment, w.pid)
+		w.logger.Debugf("worker", "lock acquisition is not ok:{key=%s,segment=%s,pid=%s}", w.key, w.segment, w.pid)
 		return nil
 	}
 
@@ -78,7 +81,7 @@ func (w *Worker) doJob(ctx context.Context) (err error) {
 			)
 		}
 		if !ok {
-			log.Printf("lock releasing is not ok:{key=%s,segment=%s,pid=%s}\n", w.key, w.segment, w.pid)
+			w.logger.Debugf("worker", "lock releasing is not ok:{key=%s,segment=%s,pid=%s}", w.key, w.segment, w.pid)
 		}
 	}()
 
