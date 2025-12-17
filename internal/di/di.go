@@ -15,6 +15,7 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/order"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/user"
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
+	accrueProcessingOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueProcessingOrders/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/auth"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
 	getUserBalance "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getUserBalance/v0"
@@ -44,6 +45,7 @@ type DI struct {
 		}
 		authService                    *auth.Service
 		accrueNewOrdersService         *accrueNewOrders.Service
+		accrueProcessingOrdersService  *accrueProcessingOrders.Service
 		postUserOrdersService          *postUserOrders.Service
 		getUserOrdersService           *getUserOrders.Service
 		getUserBalanceService          *getUserBalance.Service
@@ -106,6 +108,8 @@ func (di *DI) initServices() {
 	di.services.authService = auth.New(di.repositories.jwt)
 
 	di.services.accrueNewOrdersService = accrueNewOrders.New(di.config.Service.AccrueNewOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
+	di.services.accrueProcessingOrdersService = accrueProcessingOrders.New(di.config.Service.AccrueProcessingOrders, di.repositories.order, di.services.included.getAccrualInfoByOrdersService)
+
 	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order, di.repositories.jwt)
@@ -124,6 +128,15 @@ func (di *DI) initWorkers() {
 		"accrue_new",
 		"",
 		di.services.accrueNewOrdersService.Do,
+	)
+
+	di.workers.accrueProcessing = worker.New(
+		di.config.Worker.AccrueProcessing,
+		di.repositories.lock,
+		di.config.AppName,
+		"accrue_processing",
+		"",
+		di.services.accrueProcessingOrdersService.Do,
 	)
 }
 
@@ -155,6 +168,7 @@ func (di *DI) Start() error {
 	defer cancel()
 
 	di.workers.accrueNew.Start(ctx)
+	di.workers.accrueProcessing.Start(ctx)
 
 	err := http.ListenAndServe(di.config.HTTP.Address, handler.Conveyor(
 		di.api.external,
