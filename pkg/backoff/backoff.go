@@ -3,23 +3,26 @@ package backoff
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/logger"
 )
 
 type Backoff struct {
+	logger          *logger.ZapLogger
 	errClassifyFunc func(err error) ErrorClassification
 	maxRetries      uint16
 	t0              time.Duration
 }
 
 func NewBackoff(
+	logger *logger.ZapLogger,
 	errClassifyFunc func(err error) ErrorClassification,
 	maxRetries uint16,
 	t0 time.Duration,
-
 ) *Backoff {
 	return &Backoff{
+		logger:          logger,
 		errClassifyFunc: errClassifyFunc,
 		maxRetries:      maxRetries,
 		t0:              t0,
@@ -54,7 +57,7 @@ func (b *Backoff) doAttempt(ctx context.Context, fn retried, attempt uint16, del
 		return true, nil
 	}
 
-	log.Printf("attempt #%d failed: %v", attempt+1, err)
+	b.logger.Debugf("backoff", "attempt #%d failed: %v", attempt+1, err)
 	if b.errClassifyFunc(err) == NonRetriable {
 		return false, fmt.Errorf("non retriable, %w", err)
 	}
@@ -62,7 +65,7 @@ func (b *Backoff) doAttempt(ctx context.Context, fn retried, attempt uint16, del
 		return false, fmt.Errorf("max attempts reached, %w", err)
 	}
 
-	log.Printf("retrying in %vs...", delay.Seconds())
+	b.logger.Debugf("backoff", "retrying in %vs...", delay.Seconds())
 	time.Sleep(delay)
 
 	return false, nil

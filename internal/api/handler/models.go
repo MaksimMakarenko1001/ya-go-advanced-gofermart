@@ -7,50 +7,27 @@ import (
 	"net/http"
 )
 
-type responseHashWriter struct {
-	http.ResponseWriter
-	body     bytes.Buffer
-	hashFunc func(message []byte) (string, error)
-}
-
-func (rh *responseHashWriter) Write(b []byte) (int, error) {
-	rh.ResponseWriter.Write(b)
-	return rh.body.Write(b)
-}
-
-func (rh *responseHashWriter) WriteHeader(statusCode int) {
-	rh.ResponseWriter.WriteHeader(statusCode)
-	if statusCode == http.StatusOK {
-		hash, err := rh.hashFunc(rh.body.Bytes())
-		if err != nil {
-			WriteError(rh.ResponseWriter, err)
-			return
-		}
-		rh.ResponseWriter.Header().Set("HashSHA256", hash)
-	}
-}
-
 type ResponseInfo struct {
 	Size   int
 	Status int
 	Body   bytes.Buffer
 }
 
-type responseWriter struct {
+type ResponseWriter struct {
 	http.ResponseWriter
-	response *ResponseInfo
+	Response *ResponseInfo
 }
 
-func (r *responseWriter) Write(b []byte) (int, error) {
+func (r *ResponseWriter) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
-	r.response.Size += size
-	r.response.Body.Write(b)
+	r.Response.Size += size
+	r.Response.Body.Write(b)
 	return size, err
 }
 
-func (r *responseWriter) WriteHeader(statusCode int) {
+func (r *ResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
-	r.response.Status = statusCode
+	r.Response.Status = statusCode
 }
 
 type compressWriter struct {

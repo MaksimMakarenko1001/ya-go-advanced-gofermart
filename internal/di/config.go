@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/db"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/logger"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/accrual"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/hash"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/repository/jwt"
@@ -17,9 +18,10 @@ import (
 )
 
 type diConfig struct {
-	AppName    string     `env:"app_name" envDefault:"gofermart"`
-	HTTP       HTTPConfig `envPrefix:"HTTP_"`
-	DB         db.Config  `envPrefix:"DB_"`
+	AppName    string        `env:"app_name" envDefault:"gofermart"`
+	Logger     logger.Config `envPrefix:"LOGGER_"`
+	HTTP       HTTPConfig    `envPrefix:"HTTP_"`
+	DB         db.Config     `envPrefix:"DB_"`
 	Repository struct {
 		Accrual accrual.Config `envPrefix:"ACCRUAL_"`
 		Hash    hash.Config    `envPrefix:"HASH_"`
