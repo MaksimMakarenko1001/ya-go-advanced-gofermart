@@ -73,71 +73,84 @@ func (api API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (api API) HandlePostUserOrders(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserOrdersHandler.Handle(api.postUserOrdersService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Post(postUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Post(postUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) HandleGetUserOrders(middlewares ...handler.Middleware) {
 	var h http.Handler = getUserOrdersHandler.Handle(api.getUserOrdersService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Get(getUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Get(getUserOrdersHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) HandleGetUserBalance(middlewares ...handler.Middleware) {
 	var h http.Handler = getUserBalanceHandler.Handle(api.getUserBalanceService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Get(getUserBalanceHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Get(getUserBalanceHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) HandlePostUserBalanceWithdraw(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserBalanceWithdrawHandler.Handle(api.postUserBalanceWithdrawService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Post(postUserBalanceWithdrawHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Post(postUserBalanceWithdrawHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
 }
 
 func (api API) HandleGetUserWithdrawals(middlewares ...handler.Middleware) {
 	var h http.Handler = getUserWithdrawalsHandler.Handle(api.getUserWithdrawalsService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Get(getUserWithdrawalsHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Get(getUserWithdrawalsHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) HandlePostUserRegister(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserRegisterHandler.Handle(api.postUserRegisterService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Post(postUserRegisterHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Post(postUserRegisterHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) HandlePostUserLogin(middlewares ...handler.Middleware) {
 	var h http.Handler = postUserLoginHandler.Handle(api.postUserLoginService.Do)
 
-	h = handler.Conveyor(h, middlewares...)
-
-	api.router.Post(postUserLoginHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+	api.router.Group(func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Post(postUserLoginHandler.MethodPath, func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		})
 	})
+
 }
 
 func (api API) WithJwtAuth(h http.Handler) http.Handler {

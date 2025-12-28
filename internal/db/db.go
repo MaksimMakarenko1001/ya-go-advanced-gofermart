@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
 	"github.com/golang-migrate/migrate/v4"
@@ -26,21 +27,21 @@ func New(cfg Config, backoff *backoff.LinearBackoff) (conn *PGConnect, err error
 	}
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("db not ok, %w", err)
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("migration driver not ok, %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("migration not ok, %w", err)
 	}
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return nil, err
+		return nil, fmt.Errorf("failed to migrate, %w", err)
 	}
 
 	return &PGConnect{

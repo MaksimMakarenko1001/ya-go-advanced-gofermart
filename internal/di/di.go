@@ -2,6 +2,7 @@ package di
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api"
@@ -67,20 +68,36 @@ type DI struct {
 	}
 }
 
-func (di *DI) Init(envPrefix string) {
+func (di *DI) Init(envPrefix string) error {
 	di.config = &diConfig{}
 	di.config.loadConfig(envPrefix)
 
-	di.logger = logger.New(di.config.Logger)
+	if err := di.initLogging(); err != nil {
+		return err
+	}
+	if err := di.initDB(); err != nil {
+		return err
+	}
 
-	di.initDB()
 	di.initRepositories()
 	di.initServices()
 	di.initWorkers()
 	di.initAPI()
+
+	return nil
 }
 
-func (di *DI) initDB() {
+func (di *DI) initLogging() error {
+	var err error
+	di.logger, err = logger.New(di.config.Logger)
+	if err != nil {
+		return fmt.Errorf("logger init not ok, %w", err)
+	}
+
+	return nil
+}
+
+func (di *DI) initDB() error {
 	var err error
 	di.infr.db, err = db.New(
 		di.config.DB,
@@ -90,8 +107,9 @@ func (di *DI) initDB() {
 		),
 	)
 	if err != nil {
-		di.logger.Panicf("init", "db init not ok,", err.Error())
+		return fmt.Errorf("db init not ok, %w", err)
 	}
+	return nil
 }
 
 func (di *DI) initRepositories() {
@@ -116,7 +134,7 @@ func (di *DI) initServices() {
 	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order, di.repositories.jwt)
-	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order, di.repositories.jwt)
+	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.config.Service.PostUserBalanceWithdraw, di.repositories.order, di.repositories.jwt, di.repositories.lock)
 	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order, di.repositories.jwt)
 	di.services.postUserRegisterService = postUserRegister.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)
 	di.services.postUserLoginService = postUserLogin.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)

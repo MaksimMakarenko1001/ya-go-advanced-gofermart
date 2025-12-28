@@ -9,4 +9,5 @@ type Config struct {
 	MaxRetries     uint16        `env:"max_retries" envDefault:"1"`
 	MinDelay       time.Duration `env:"min_delay" envDefault:"1s"`
 	DeltaDelay     time.Duration `env:"delta_delay" envDefault:"2s"`
+	RetryAfter     time.Duration `env:"retry_after_seconds" envDefault:"30s"`
 }

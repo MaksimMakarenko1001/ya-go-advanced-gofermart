@@ -18,6 +18,7 @@ type Accrual struct {
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
 	AccruedAt     *time.Time `json:"accrued_at"`
+	AccrueAfter   *time.Time `json:"accrue_after"`
 	OrderID       int64      `json:"order_id"`
 }
 

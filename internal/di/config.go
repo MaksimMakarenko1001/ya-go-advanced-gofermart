@@ -13,6 +13,7 @@ import (
 	accrueNewOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueNewOrders/v0"
 	accrueProcessingOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/accrueProcessingOrders/v0"
 	getAccrualInfoByOrders "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
+	postUserBalanceWithdraw "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/postUserBalanceWithdraw/v0"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/worker"
 	"github.com/caarlos0/env/v6"
 )
@@ -32,9 +33,10 @@ type diConfig struct {
 		AccrueProcessing worker.Config `envPrefix:"ACCRUE_PROCESSING_"`
 	} `envPrefix:"WORKER_"`
 	Service struct {
-		AccrueNewOrders        accrueNewOrders.Config        `envPrefix:"ACCRUE_NEW_ORDERS_"`
-		AccrueProcessingOrders accrueProcessingOrders.Config `envPrefix:"ACCRUE_PROCESSING_ORDERS_"`
-		GetAccrualInfoByOrders getAccrualInfoByOrders.Config `envPrefix:"GET_ACCRUAL_INFO_BY_ORDERS_"`
+		AccrueNewOrders         accrueNewOrders.Config         `envPrefix:"ACCRUE_NEW_ORDERS_"`
+		AccrueProcessingOrders  accrueProcessingOrders.Config  `envPrefix:"ACCRUE_PROCESSING_ORDERS_"`
+		GetAccrualInfoByOrders  getAccrualInfoByOrders.Config  `envPrefix:"GET_ACCRUAL_INFO_BY_ORDERS_"`
+		PostUserBalanceWithdraw postUserBalanceWithdraw.Config `envPrefix:"POST_USER_BALANCE_WITHDRAW_"`
 	} `envPrefix:"SERVICE_"`
 }
 
