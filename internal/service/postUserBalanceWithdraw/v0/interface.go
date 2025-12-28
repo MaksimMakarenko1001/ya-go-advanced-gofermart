@@ -2,9 +2,15 @@ package v0
 
 import (
 	"context"
+	"time"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
 )
+
+type Locker interface {
+	LockAcquire(ctx context.Context, key string, segment string, until time.Time, pid string) (ok bool, err error)
+	LockRelease(ctx context.Context, key string, segment string, pid string) (ok bool, err error)
+}
 
 type OrderRepository interface {
 	OrdersGetUserBalanceByUserID(ctx context.Context, userID int64) (balance *entity.UserBalance, err error)

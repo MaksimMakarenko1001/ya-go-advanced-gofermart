@@ -3,6 +3,7 @@ package v0
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	handler "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/api/handler/postUserBalanceWithdraw/v0"
@@ -12,15 +13,21 @@ import (
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
 )
 
+const lockKey = "postUserBalanceWithdraw"
+
 type Service struct {
+	config          Config
 	orderRepository OrderRepository
 	jwtRepository   JwtRepository
+	locker          Locker
 }
 
-func New(orderRepository OrderRepository, jwtRepository JwtRepository) *Service {
+func New(config Config, orderRepository OrderRepository, jwtRepository JwtRepository, locker Locker) *Service {
 	return &Service{
+		config:          config,
 		orderRepository: orderRepository,
 		jwtRepository:   jwtRepository,
+		locker:          locker,
 	}
 }
 
@@ -34,6 +41,20 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, err
 	}
 
+	ts := time.Now()
+	userIDStr := strconv.FormatInt(userID, 10)
+
+	ok, err := srv.locker.LockAcquire(ctx, lockKey, userIDStr, ts.Add(srv.config.LockInterval), "")
+	if err != nil {
+		return nil, fmt.Errorf("error to acquire lock: %w", err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to acquire lock")
+	}
+	defer func() {
+		srv.locker.LockRelease(ctx, lockKey, userIDStr, "")
+	}()
+
 	balance, err := srv.orderRepository.OrdersGetUserBalanceByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -46,7 +67,6 @@ func (srv *Service) Do(ctx context.Context, r handler.Request) (resp *handler.Re
 		return nil, pkg.ErrPaymentRequired
 	}
 
-	ts := time.Now()
 	createResp, err := srv.orderRepository.OrdersCreateWithdrawal(ctx, r.Order,
 		entity.Order{
 			OrderNumber: r.Order,

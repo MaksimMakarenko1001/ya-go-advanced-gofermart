@@ -116,7 +116,7 @@ func (di *DI) initServices() {
 	di.services.postUserOrdersService = postUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserOrdersService = getUserOrders.New(di.repositories.order, di.repositories.jwt)
 	di.services.getUserBalanceService = getUserBalance.New(di.repositories.order, di.repositories.jwt)
-	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.repositories.order, di.repositories.jwt)
+	di.services.postUserBalanceWithdrawService = postUserBalanceWithdraw.New(di.config.Service.PostUserBalanceWithdraw, di.repositories.order, di.repositories.jwt, di.repositories.lock)
 	di.services.getUserWithdrawalsService = getUserWithdrawals.New(di.repositories.order, di.repositories.jwt)
 	di.services.postUserRegisterService = postUserRegister.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)
 	di.services.postUserLoginService = postUserLogin.New(di.repositories.user, di.repositories.hash, di.repositories.jwt)
