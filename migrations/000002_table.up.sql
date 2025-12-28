@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS orders.users (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS orders.users (
 );
 
 CREATE TABLE IF NOT EXISTS orders.orders (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     order_number TEXT UNIQUE NOT NULL,
     order_status TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS orders.orders (
 );
 
 CREATE TABLE IF NOT EXISTS orders.accruals (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     accrual_status TEXT NOT NULL,
     accrual_amount BIGINT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS orders.accruals (
 );
 
 CREATE TABLE IF NOT EXISTS orders.withdrawals (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     withdrawal_amount BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS orders.withdrawals (
 );
 
 CREATE TABLE IF NOT EXISTS orders.user_balances (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     accrual_amount BIGINT NOT NULL,
     withdrawal_amount BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
