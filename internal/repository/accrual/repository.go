@@ -37,18 +37,18 @@ func New(cfg Config, backoff *backoff.LinearBackoff) *Repository {
 
 func (r *Repository) AccrualsGetInfoByOrders(ctx context.Context, orderNumbers []string) ([]srv.AccrualResponse, error) {
 	var wg sync.WaitGroup
-	res := make([]srv.AccrualResponse, 0, len(orderNumbers))
+	res := make([]srv.AccrualResponse, len(orderNumbers))
 
 	for i, id := range orderNumbers {
 		wg.Add(1)
-		go func(i int, orderId string) {
+		go func(idx int, orderId string) {
 			r.semaphore <- struct{}{}
 
 			defer func() { <-r.semaphore }()
 			defer wg.Done()
 
 			resp, err := r.sendWithBackoff(ctx, orderId)
-			res[i] = srv.AccrualResponse{Err: err, Payload: resp}
+			res[idx] = srv.AccrualResponse{Err: err, Payload: resp}
 
 		}(i, id)
 	}
