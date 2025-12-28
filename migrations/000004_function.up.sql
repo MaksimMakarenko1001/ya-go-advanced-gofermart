@@ -100,6 +100,7 @@ declare
 begin
     with cte as (
         select * from orders.orders where order_status = _order_status
+            order by created_at
             limit _limit
     )
     select 
@@ -142,7 +143,8 @@ begin
                 updated_at = src.updated_at,
                 accrual_status = src.accrual_status,
                 accrual_amount = src.accrual_amount,
-                accrued_at = src.accrued_at
+                accrued_at = src.accrued_at,
+                accrue_after = src.accrue_after
             from accrual_cte as src
             where upd.order_id = src.order_id
         ),

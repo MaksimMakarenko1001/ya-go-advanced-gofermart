@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS orders.accruals (
     updated_at TIMESTAMPTZ NOT NULL,
     order_id INTEGER UNIQUE NOT NULL,
     accrued_at TIMESTAMPTZ,
+    accrue_after TIMESTAMPTZ,
 
     FOREIGN KEY (order_id) REFERENCES orders.orders(id)
 );

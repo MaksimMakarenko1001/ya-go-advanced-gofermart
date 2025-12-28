@@ -7,25 +7,28 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	srv "github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/service/getAccrualInfoByOrders/v0"
+	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/backoff"
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/gofermart"
-	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/pkg/types/moneys"
 )
 
 type Repository struct {
-	semaphore chan struct{}
-	address   string
-	backoff   *backoff.LinearBackoff
-	client    *http.Client
+	semaphore         chan struct{}
+	address           string
+	backoff           *backoff.LinearBackoff
+	client            *http.Client
+	retryAfterDefault time.Duration
 }
 
 func New(cfg Config, backoff *backoff.LinearBackoff) *Repository {
 	return &Repository{
-		semaphore: make(chan struct{}, cfg.ThrottlingRate),
-		address:   cfg.Address,
-		backoff:   backoff,
+		semaphore:         make(chan struct{}, cfg.ThrottlingRate),
+		address:           cfg.Address,
+		retryAfterDefault: cfg.RetryAfter,
+		backoff:           backoff,
 		client: &http.Client{
 			Timeout: cfg.Timeout,
 		},
@@ -36,21 +39,18 @@ func (r *Repository) AccrualsGetInfoByOrders(ctx context.Context, orderNumbers [
 	var wg sync.WaitGroup
 	res := make([]srv.AccrualResponse, 0, len(orderNumbers))
 
-	for _, id := range orderNumbers {
+	for i, id := range orderNumbers {
 		wg.Add(1)
-		go func(orderId string) {
+		go func(i int, orderId string) {
 			r.semaphore <- struct{}{}
 
 			defer func() { <-r.semaphore }()
 			defer wg.Done()
 
 			resp, err := r.sendWithBackoff(ctx, orderId)
-			res = append(res, srv.AccrualResponse{
-				Err:     err,
-				Payload: resp,
-			})
+			res[i] = srv.AccrualResponse{Err: err, Payload: resp}
 
-		}(id)
+		}(i, id)
 	}
 	wg.Wait()
 
@@ -93,10 +93,18 @@ func (r *Repository) send(ctx context.Context, orderNumber string) (res *srv.Acc
 		res = &srv.AccrualPayload{
 			OrderNumber:   orderNumber,
 			AccrualStatus: gofermart.AccrualStatusNone,
-			AccrualAmount: moneys.Money{},
 		}
 	case http.StatusTooManyRequests:
-		errResp = fmt.Errorf("%w{retry-after=%vs}", errAccuralTooManyRequests, response.Header.Get("Retry-After"))
+		retryAfter, err := time.ParseDuration(response.Header.Get("Retry-After") + "s")
+		if err != nil {
+			retryAfter = r.retryAfterDefault
+		}
+
+		res = &srv.AccrualPayload{
+			OrderNumber:   orderNumber,
+			AccrualStatus: gofermart.AccrualStatusWaiting,
+			AccrualAfter:  pkg.ToPtr(time.Now().Add(retryAfter)),
+		}
 	case http.StatusInternalServerError:
 		errResp = fmt.Errorf("%w", errAccuralInternalServer)
 	default:

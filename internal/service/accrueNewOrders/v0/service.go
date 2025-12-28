@@ -2,7 +2,6 @@ package v0
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/MaksimMakarenko1001/ya-go-advanced-gofermart.git/internal/entity"
@@ -35,27 +34,26 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 		return nil
 	}
 
-	accrualResp, err := srv.getAccrualInfoByOrders.Do(ctx, pkg.Select(items, func(x entity.AccrualItem) string { return x.Order.OrderNumber }))
+	ts := time.Now()
+	items = pkg.FilterSlice(items, func(x entity.AccrualItem) bool { return pkg.Deref(x.Accrual.AccrueAfter).Before(ts) })
+
+	accrualResp, err := srv.getAccrualInfoByOrders.Do(ctx, pkg.SelectSlice(items, func(x entity.AccrualItem) string { return x.Order.OrderNumber }))
 	if err != nil {
 		return err
 	}
 
-	ts := time.Now()
 	orders := make([]entity.Order, 0, len(items))
 	accruals := make([]entity.Accrual, 0, len(items))
 	userAccrualMap := make(map[int64]moneys.Money, len(items))
-	orderHits := make(map[string]struct{}, len(items))
+
 	for _, item := range items {
-		payload, ok := accrualResp[item.Order.OrderNumber]
-		if !ok {
-			return fmt.Errorf("order accrual not ok, %s", item.Order.OrderNumber)
-		}
-
-		orderHits[item.Order.OrderNumber] = struct{}{}
-
 		var accruedAt *time.Time
 		var orderStatus gofermart.OrderStatusType
+		payload := accrualResp[item.Order.OrderNumber]
+
 		switch payload.AccrualStatus {
+		case gofermart.AccrualStatusWaiting:
+			orderStatus = gofermart.OrderStatusNew
 		case gofermart.AccrualStatusInvalid, gofermart.AccrualStatusNone:
 			orderStatus = gofermart.OrderStatusInvalid
 		case gofermart.AccrualStatusRegistered, gofermart.AccrualStatusProcessing:
@@ -68,7 +66,7 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 		}
 
 		orders = append(orders, entity.Order{
-			OrderNumber: payload.OrderNumber,
+			OrderNumber: item.Order.OrderNumber,
 			OrderStatus: orderStatus.String(),
 			UpdatedAt:   ts,
 		})
@@ -97,17 +95,6 @@ func (srv *Service) Do(ctx context.Context) (err error) {
 		})
 	}
 
-	orderUpdatedNumbers, err := srv.orderRepository.OrdersUpdateAccruals(ctx, orders, accruals, userBalanceUpdates)
-	if err != nil {
-		return err
-	}
-
-	for _, number := range orderUpdatedNumbers {
-		delete(orderHits, number)
-	}
-	if len(orderHits) > 0 {
-		return fmt.Errorf("failed to update order numbers, %v", pkg.KeysToList(orderHits))
-	}
-
-	return nil
+	_, err = srv.orderRepository.OrdersUpdateAccruals(ctx, orders, accruals, userBalanceUpdates)
+	return err
 }

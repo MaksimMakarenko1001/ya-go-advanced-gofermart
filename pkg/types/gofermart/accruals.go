@@ -7,6 +7,7 @@ const (
 	AccrualStatusInvalid    AccrualStatusType = "INVALID"
 	AccrualStatusProcessing AccrualStatusType = "PROCESSING"
 	AccrualStatusProcessed  AccrualStatusType = "PROCESSED"
+	AccrualStatusWaiting    AccrualStatusType = "WAITING"
 )
 
 type AccrualStatusType string
