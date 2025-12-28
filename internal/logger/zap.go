@@ -27,26 +27,28 @@ type ZapLogger struct {
 	logger *zap.Logger
 }
 
-func New(config Config) *ZapLogger {
+func New(config Config) (*ZapLogger, error) {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		panic("cannot initialize zap")
+		return nil, fmt.Errorf("cannot initialize, %w", err)
 	}
-	logger.Sync()
+	defer logger.Sync()
 
 	lvl, err := zap.ParseAtomicLevel(string(config.Level))
 	if err != nil {
-		logger.Panic("log level not ok", zap.Error(err))
+		return nil, fmt.Errorf("log level not ok, %w", err)
 	}
+
 	cfg := zap.NewProductionConfig()
 	cfg.Level = lvl
 
 	zl, err := cfg.Build()
 	if err != nil {
-		logger.Panic("log config not ok", zap.Error(err))
+		return nil, fmt.Errorf("log config not ok, %w", err)
 	}
+
 	logger.Info("zap", zap.String("log level", zl.Level().String()))
-	return &ZapLogger{logger: zl}
+	return &ZapLogger{logger: zl}, nil
 }
 
 func (zl *ZapLogger) LogHTTP(info HTTPInfo) {
